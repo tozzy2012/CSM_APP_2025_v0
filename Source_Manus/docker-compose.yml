@@ -1,0 +1,247 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # DATABASES
+  # ============================================================================
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: zapper-postgres
+    environment:
+      POSTGRES_DB: zapper_cs
+      POSTGRES_USER: zapper_user
+      POSTGRES_PASSWORD: zapper_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zapper_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zapper-network
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: zapper-timescaledb
+    environment:
+      POSTGRES_DB: zapper_events
+      POSTGRES_USER: zapper_user
+      POSTGRES_PASSWORD: zapper_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zapper_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zapper-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: zapper-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zapper-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: zapper-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: zapper
+      RABBITMQ_DEFAULT_PASS: zapper_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zapper-network
+
+  # ============================================================================
+  # MICROSSERVIÇOS
+  # ============================================================================
+
+  servico-crm:
+    build:
+      context: ./servico-crm
+      dockerfile: Dockerfile
+    container_name: zapper-servico-crm
+    environment:
+      DATABASE_URL: postgresql://zapper_user:zapper_password@postgres:5432/zapper_cs
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-secret-key-change-in-production
+      LOG_LEVEL: INFO
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - zapper-network
+    restart: unless-stopped
+
+  servico-atividades:
+    build:
+      context: ./servico-atividades
+      dockerfile: Dockerfile
+    container_name: zapper-servico-atividades
+    environment:
+      DATABASE_URL: postgresql://zapper_user:zapper_password@postgres:5432/zapper_cs
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://zapper:zapper_password@rabbitmq:5672/
+      JWT_SECRET: your-secret-key-change-in-production
+      LOG_LEVEL: INFO
+    ports:
+      - "8002:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - zapper-network
+    restart: unless-stopped
+
+  servico-ingestao-eventos:
+    build:
+      context: ./servico-ingestao-eventos
+      dockerfile: Dockerfile
+    container_name: zapper-servico-ingestao-eventos
+    environment:
+      DATABASE_URL: postgresql://zapper_user:zapper_password@timescaledb:5432/zapper_events
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://zapper:zapper_password@rabbitmq:5672/
+      INGEST_API_KEYS: test-api-key-1,test-api-key-2
+      LOG_LEVEL: INFO
+    ports:
+      - "8003:8000"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - zapper-network
+    restart: unless-stopped
+
+  servico-healthscore:
+    build:
+      context: ./servico-healthscore
+      dockerfile: Dockerfile
+    container_name: zapper-servico-healthscore
+    environment:
+      DATABASE_URL: postgresql://zapper_user:zapper_password@postgres:5432/zapper_cs
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-secret-key-change-in-production
+      LOG_LEVEL: INFO
+    ports:
+      - "8004:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - zapper-network
+    restart: unless-stopped
+
+  servico-inferencia-ia:
+    build:
+      context: ./servico-inferencia-ia
+      dockerfile: Dockerfile
+    container_name: zapper-servico-inferencia-ia
+    environment:
+      DATABASE_URL: postgresql://zapper_user:zapper_password@postgres:5432/zapper_cs
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-secret-key-change-in-production
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LOG_LEVEL: INFO
+    ports:
+      - "8005:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - zapper-network
+    restart: unless-stopped
+
+  servico-gateway-api:
+    build:
+      context: ./servico-gateway-api
+      dockerfile: Dockerfile
+    container_name: zapper-gateway-api
+    environment:
+      CRM_SERVICE_URL: http://servico-crm:8000
+      ACTIVITIES_SERVICE_URL: http://servico-atividades:8000
+      EVENTS_SERVICE_URL: http://servico-ingestao-eventos:8000
+      HEALTHSCORE_SERVICE_URL: http://servico-healthscore:8000
+      AI_SERVICE_URL: http://servico-inferencia-ia:8000
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      - servico-crm
+      - servico-atividades
+      - servico-ingestao-eventos
+      - servico-healthscore
+      - servico-inferencia-ia
+    networks:
+      - zapper-network
+    restart: unless-stopped
+
+  # ============================================================================
+  # FRONTEND (Opcional - pode ser servido separadamente)
+  # ============================================================================
+
+  # frontend:
+  #   build:
+  #     context: ../zapper-cs-frontend
+  #     dockerfile: Dockerfile
+  #   container_name: zapper-frontend
+  #   environment:
+  #     VITE_API_BASE_URL: http://localhost:8000
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - servico-gateway-api
+  #   networks:
+  #     - zapper-network
+
+volumes:
+  postgres_data:
+  timescale_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  zapper-network:
+    driver: bridge

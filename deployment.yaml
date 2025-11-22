@@ -1,0 +1,417 @@
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zapper-cs
+
+---
+# ConfigMap para variáveis de ambiente compartilhadas
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zapper-config
+  namespace: zapper-cs
+data:
+  LOG_LEVEL: "INFO"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "zapper_cs"
+  TIMESCALEDB_HOST: "timescaledb-service"
+  TIMESCALEDB_PORT: "5432"
+  TIMESCALEDB_DB: "zapper_events"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  RABBITMQ_HOST: "rabbitmq-service"
+  RABBITMQ_PORT: "5672"
+
+---
+# Secret para credenciais sensíveis
+apiVersion: v1
+kind: Secret
+metadata:
+  name: zapper-secrets
+  namespace: zapper-cs
+type: Opaque
+stringData:
+  POSTGRES_USER: "zapper_user"
+  POSTGRES_PASSWORD: "zapper_password"
+  JWT_SECRET: "your-secret-key-change-in-production"
+  OPENAI_API_KEY: "your-openai-api-key"
+  RABBITMQ_USER: "zapper"
+  RABBITMQ_PASSWORD: "zapper_password"
+
+---
+# PostgreSQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: zapper-cs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: zapper-config
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: zapper-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: zapper-secrets
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: zapper-cs
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+# PostgreSQL PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: zapper-cs
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# TimescaleDB Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timescaledb
+  namespace: zapper-cs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: timescaledb
+  template:
+    metadata:
+      labels:
+        app: timescaledb
+    spec:
+      containers:
+      - name: timescaledb
+        image: timescale/timescaledb:latest-pg15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: zapper-config
+              key: TIMESCALEDB_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: zapper-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: zapper-secrets
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: timescale-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: timescale-storage
+        persistentVolumeClaim:
+          claimName: timescaledb-pvc
+
+---
+# TimescaleDB Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: timescaledb-service
+  namespace: zapper-cs
+spec:
+  selector:
+    app: timescaledb
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+# TimescaleDB PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: timescaledb-pvc
+  namespace: zapper-cs
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: zapper-cs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: zapper-cs
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+
+---
+# RabbitMQ Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: zapper-cs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3-management-alpine
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: zapper-secrets
+              key: RABBITMQ_USER
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: zapper-secrets
+              key: RABBITMQ_PASSWORD
+
+---
+# RabbitMQ Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+  namespace: zapper-cs
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+  - name: amqp
+    port: 5672
+    targetPort: 5672
+  - name: management
+    port: 15672
+    targetPort: 15672
+  type: ClusterIP
+
+---
+# Serviço CRM Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servico-crm
+  namespace: zapper-cs
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: servico-crm
+  template:
+    metadata:
+      labels:
+        app: servico-crm
+    spec:
+      containers:
+      - name: servico-crm
+        image: zapper-cs/servico-crm:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
+        - name: REDIS_URL
+          value: "redis://$(REDIS_HOST):$(REDIS_PORT)"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: zapper-secrets
+              key: JWT_SECRET
+        envFrom:
+        - configMapRef:
+            name: zapper-config
+        - secretRef:
+            name: zapper-secrets
+
+---
+# Serviço CRM Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: servico-crm
+  namespace: zapper-cs
+spec:
+  selector:
+    app: servico-crm
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+
+---
+# API Gateway Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servico-gateway-api
+  namespace: zapper-cs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: servico-gateway-api
+  template:
+    metadata:
+      labels:
+        app: servico-gateway-api
+    spec:
+      containers:
+      - name: servico-gateway-api
+        image: zapper-cs/servico-gateway-api:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: CRM_SERVICE_URL
+          value: "http://servico-crm:8000"
+        - name: ACTIVITIES_SERVICE_URL
+          value: "http://servico-atividades:8000"
+        - name: EVENTS_SERVICE_URL
+          value: "http://servico-ingestao-eventos:8000"
+        - name: HEALTHSCORE_SERVICE_URL
+          value: "http://servico-healthscore:8000"
+        - name: AI_SERVICE_URL
+          value: "http://servico-inferencia-ia:8000"
+        envFrom:
+        - configMapRef:
+            name: zapper-config
+
+---
+# API Gateway Service (LoadBalancer para acesso externo)
+apiVersion: v1
+kind: Service
+metadata:
+  name: servico-gateway-api
+  namespace: zapper-cs
+spec:
+  selector:
+    app: servico-gateway-api
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: LoadBalancer
+
+---
+# HorizontalPodAutoscaler para API Gateway
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gateway-hpa
+  namespace: zapper-cs
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: servico-gateway-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

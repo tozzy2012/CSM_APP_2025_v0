@@ -1,0 +1,21 @@
+services:
+  db:
+    image: timescale/timescaledb:2.17.2-pg16
+    container_name: csapp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: csapp
+      POSTGRES_PASSWORD: csapp
+      POSTGRES_DB: csapp
+    ports:
+      - "5433:5432"
+    volumes:
+      - csapp_pgdata:/var/lib/postgresql/data
+  adminer:
+    image: adminer:4
+    container_name: csapp-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+volumes:
+  csapp_pgdata:

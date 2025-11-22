@@ -1,0 +1,9 @@
+{
+    "title": "Teste Fail",
+    "description": "Testing failure",
+    "status": "todo",
+    "priority": "medium",
+    "assignee": "1",
+    "due_date": "2025-11-21",
+    "account_id": "1763600612631"
+}

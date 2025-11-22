@@ -1,0 +1,9 @@
+{
+    "title": "Teste No Acc 2",
+    "description": "Testing without account",
+    "status": "todo",
+    "priority": "medium",
+    "assignee": "1",
+    "due_date": "2025-11-21",
+    "account_id": null
+}

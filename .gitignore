@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+server/.venv/
+.env
+
+# Node / Vite
+client/node_modules/
+client/.vite/
+client/dist/
+client/.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+node_modules
+
+# Backups
+*.zip
+*.bak
+*.tar.gz
