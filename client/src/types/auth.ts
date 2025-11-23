@@ -18,6 +18,9 @@ export interface User {
 export interface Organization {
   id: string;
   name: string;
+  subdomain?: string;
+  plan?: 'starter' | 'pro' | 'enterprise';
+  status?: 'active' | 'inactive';
   createdAt: string;
   active: boolean;
 }

@@ -16,6 +16,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
+import SuperAdmin from "./pages/SuperAdmin";
 import Clients from "./pages/Clients";
 import ClientDetails from "./pages/ClientDetails";
 import Dashboard from "./pages/Dashboard";
@@ -43,6 +44,16 @@ function Router() {
           <ProtectedRoute requiredRole={UserRole.SUPER_ADMIN}>
             <DashboardLayout hideHealthScoreButton>
               <Admin />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/super-admin"
+        component={() => (
+          <ProtectedRoute requiredRole={UserRole.SUPER_ADMIN}>
+            <DashboardLayout hideHealthScoreButton>
+              <SuperAdmin />
             </DashboardLayout>
           </ProtectedRoute>
         )}

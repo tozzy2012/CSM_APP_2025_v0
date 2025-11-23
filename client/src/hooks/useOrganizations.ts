@@ -24,6 +24,9 @@ export function useOrganizations() {
       const demoOrg: Organization = {
         id: "demo-org-001",
         name: "Demo Organization",
+        subdomain: "demo",
+        plan: "starter",
+        status: "active",
         createdAt: new Date().toISOString(),
         active: true,
       };
