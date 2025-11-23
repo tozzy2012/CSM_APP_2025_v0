@@ -77,19 +77,19 @@ const Dashboard = () => {
         {/* Custom Tab Navigation */}
         <Card className="overflow-hidden">
           <CardContent className="p-6">
-            <TabsList className="grid w-full grid-cols-3 gap-4 bg-transparent h-auto p-0">
+            <TabsList className="inline-flex gap-4 bg-transparent h-auto p-0">
               <TabsTrigger
                 value="overview"
-                className="relative flex flex-col items-center gap-3 p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all duration-200 data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 data-[state=active]:shadow-lg group"
+                className="relative flex flex-col items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all duration-200 data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 data-[state=active]:shadow-lg group min-w-[180px]"
               >
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 group-data-[state=active]:from-blue-500 group-data-[state=active]:to-blue-600 transition-all">
-                  <LayoutGrid className="w-7 h-7 text-blue-600 group-data-[state=active]:text-white" />
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 group-data-[state=active]:from-blue-500 group-data-[state=active]:to-blue-600 transition-all">
+                  <LayoutGrid className="w-5 h-5 text-blue-600 group-data-[state=active]:text-white" />
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-sm text-gray-900 group-data-[state=active]:text-blue-700">
                     Visão Geral
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 group-data-[state=active]:text-blue-600">
+                  <div className="text-xs text-gray-500 mt-0.5 group-data-[state=active]:text-blue-600">
                     Contas e pipeline
                   </div>
                 </div>
@@ -97,16 +97,16 @@ const Dashboard = () => {
 
               <TabsTrigger
                 value="kanban"
-                className="relative flex flex-col items-center gap-3 p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-purple-400 hover:shadow-md transition-all duration-200 data-[state=active]:border-purple-500 data-[state=active]:bg-purple-50 data-[state=active]:shadow-lg group"
+                className="relative flex flex-col items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-xl hover:border-purple-400 hover:shadow-md transition-all duration-200 data-[state=active]:border-purple-500 data-[state=active]:bg-purple-50 data-[state=active]:shadow-lg group min-w-[180px]"
               >
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 group-data-[state=active]:from-purple-500 group-data-[state=active]:to-purple-600 transition-all">
-                  <KanbanIcon className="w-7 h-7 text-purple-600 group-data-[state=active]:text-white" />
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 group-data-[state=active]:from-purple-500 group-data-[state=active]:to-purple-600 transition-all">
+                  <KanbanIcon className="w-5 h-5 text-purple-600 group-data-[state=active]:text-white" />
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-sm text-gray-900 group-data-[state=active]:text-purple-700">
                     Kanban Board
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 group-data-[state=active]:text-purple-600">
+                  <div className="text-xs text-gray-500 mt-0.5 group-data-[state=active]:text-purple-600">
                     Gestão visual
                   </div>
                 </div>
@@ -114,16 +114,16 @@ const Dashboard = () => {
 
               <TabsTrigger
                 value="executive"
-                className="relative flex flex-col items-center gap-3 p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-green-400 hover:shadow-md transition-all duration-200 data-[state=active]:border-green-500 data-[state=active]:bg-green-50 data-[state=active]:shadow-lg group"
+                className="relative flex flex-col items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-xl hover:border-green-400 hover:shadow-md transition-all duration-200 data-[state=active]:border-green-500 data-[state=active]:bg-green-50 data-[state=active]:shadow-lg group min-w-[180px]"
               >
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-green-100 to-green-200 group-data-[state=active]:from-green-500 group-data-[state=active]:to-green-600 transition-all">
-                  <BarChart3 className="w-7 h-7 text-green-600 group-data-[state=active]:text-white" />
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-green-100 to-green-200 group-data-[state=active]:from-green-500 group-data-[state=active]:to-green-600 transition-all">
+                  <BarChart3 className="w-5 h-5 text-green-600 group-data-[state=active]:text-white" />
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-sm text-gray-900 group-data-[state=active]:text-green-700">
                     Dashboard Executivo
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 group-data-[state=active]:text-green-600">
+                  <div className="text-xs text-gray-500 mt-0.5 group-data-[state=active]:text-green-600">
                     Métricas estratégicas
                   </div>
                 </div>
@@ -202,35 +202,32 @@ const Dashboard = () => {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {accounts.map((account) => (
-                  <Card key={account.id} className="group hover:shadow-lg transition-all duration-200 bg-white border border-gray-200 hover:border-blue-300">
+                  <Card key={account.id} className="group hover:shadow-lg transition-all duration-200 bg-white border border-gray-200 hover:border-blue-300 relative overflow-hidden">
                     <CardContent className="p-4">
                       <div className="space-y-3">
-                        {/* Header com nome e menu */}
-                        <div className="flex items-start justify-between">
-                          <Link href={`/accounts/${account.id}`}>
-                            <a className="flex-1">
-                              <h4 className="font-semibold text-sm text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-                                {account.name}
-                              </h4>
-                            </a>
-                          </Link>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreVertical className="h-4 w-4 text-gray-400" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setEditingAccount(account)}>
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        {/* Header com badge de status no topo */}
+                        <div className="flex items-center justify-start">
+                          {/* Status Badge */}
+                          {account.status && (
+                            <Badge
+                              variant="outline"
+                              className={`text-xs px-2 py-0.5 h-5 border ${getStatusColor(
+                                account.status
+                              )}`}
+                            >
+                              {account.status}
+                            </Badge>
+                          )}
                         </div>
+
+                        {/* Nome da empresa - DESTAQUE */}
+                        <Link href={`/accounts/${account.id}`}>
+                          <a className="block">
+                            <h4 className="font-bold text-base text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight">
+                              {account.name}
+                            </h4>
+                          </a>
+                        </Link>
 
                         {/* CSM com Avatar */}
                         {account.csm && (
@@ -245,7 +242,7 @@ const Dashboard = () => {
                         )}
 
                         {/* MRR */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                           <div className="flex items-center gap-1.5">
                             <DollarSign className="h-3.5 w-3.5 text-green-600" />
                             <span className="font-semibold text-sm text-green-600">
@@ -255,26 +252,37 @@ const Dashboard = () => {
                           <span className="text-xs text-gray-500">MRR</span>
                         </div>
 
-                        {/* Badges */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {account.type && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs px-2 py-0 h-5 bg-gray-50 text-gray-700 border-gray-200"
-                            >
-                              {account.type}
-                            </Badge>
-                          )}
-                          {account.status && (
-                            <Badge
-                              variant="outline"
-                              className={`text-xs px-2 py-0 h-5 border ${getStatusColor(
-                                account.status
-                              )}`}
-                            >
-                              {account.status}
-                            </Badge>
-                          )}
+                        {/* Badges e Menu - alinhados na mesma linha */}
+                        <div className="flex items-center justify-between gap-2">
+                          {/* Badges à esquerda */}
+                          <div className="flex items-center gap-2 flex-wrap flex-1">
+                            {account.type && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs px-2 py-0 h-5 bg-gray-50 text-gray-700 border-gray-200"
+                              >
+                                {account.type}
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Menu à direita */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-gray-100 rounded-md bg-white shadow-sm border border-gray-200 flex-shrink-0"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="h-4 w-4 text-gray-600" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setEditingAccount(account)}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </CardContent>

@@ -334,46 +334,50 @@ export default function Accounts() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline">{account.type}</Badge>
-                    <Badge variant="secondary">{account.stage}</Badge>
-                    {(() => {
-                      const stats = getProgressStats(account.id);
-                      return (
-                        <Badge
-                          variant={stats.isComplete ? "default" : "outline"}
-                          className={stats.isComplete ? "bg-green-600" : ""}
-                        >
-                          {stats.completed}/{stats.total} ✓
-                        </Badge>
-                      );
-                    })()}
-                  </div>
-                </div>
+                  {/* Badges e botões na mesma linha - parte inferior */}
+                  <div className="flex items-center justify-between gap-2">
+                    {/* Badges à esquerda */}
+                    <div className="flex items-center gap-2 flex-wrap flex-1">
+                      <Badge variant="outline">{account.type}</Badge>
+                      <Badge variant="secondary">{account.stage}</Badge>
+                      {(() => {
+                        const stats = getProgressStats(account.id);
+                        return (
+                          <Badge
+                            variant={stats.isComplete ? "default" : "outline"}
+                            className={stats.isComplete ? "bg-green-600" : ""}
+                          >
+                            {stats.completed}/{stats.total} ✓
+                          </Badge>
+                        );
+                      })()}
+                    </div>
 
-                {/* Action Buttons */}
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingAccount(account);
-                    }}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeletingAccount(account);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    {/* Action Buttons à direita - sempre visíveis no hover do card */}
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingAccount(account);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeletingAccount(account);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </Card>
             ))}
