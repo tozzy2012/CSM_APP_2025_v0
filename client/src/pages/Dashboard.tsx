@@ -72,22 +72,65 @@ const Dashboard = () => {
         </p>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs - Redesigned with prominent navigation */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">
-            <LayoutGrid className="w-4 h-4 mr-2" />
-            Visão Geral
-          </TabsTrigger>
-          <TabsTrigger value="kanban">
-            <KanbanIcon className="w-4 h-4 mr-2" />
-            Kanban Board
-          </TabsTrigger>
-          <TabsTrigger value="executive">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Dashboard Executivo
-          </TabsTrigger>
-        </TabsList>
+        {/* Custom Tab Navigation */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-6">
+            <TabsList className="grid w-full grid-cols-3 gap-4 bg-transparent h-auto p-0">
+              <TabsTrigger
+                value="overview"
+                className="relative flex flex-col items-center gap-3 p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all duration-200 data-[state=active]:border-blue-500 data-[state=active]:bg-blue-50 data-[state=active]:shadow-lg group"
+              >
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 group-data-[state=active]:from-blue-500 group-data-[state=active]:to-blue-600 transition-all">
+                  <LayoutGrid className="w-7 h-7 text-blue-600 group-data-[state=active]:text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-sm text-gray-900 group-data-[state=active]:text-blue-700">
+                    Visão Geral
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1 group-data-[state=active]:text-blue-600">
+                    Contas e pipeline
+                  </div>
+                </div>
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="kanban"
+                className="relative flex flex-col items-center gap-3 p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-purple-400 hover:shadow-md transition-all duration-200 data-[state=active]:border-purple-500 data-[state=active]:bg-purple-50 data-[state=active]:shadow-lg group"
+              >
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 group-data-[state=active]:from-purple-500 group-data-[state=active]:to-purple-600 transition-all">
+                  <KanbanIcon className="w-7 h-7 text-purple-600 group-data-[state=active]:text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-sm text-gray-900 group-data-[state=active]:text-purple-700">
+                    Kanban Board
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1 group-data-[state=active]:text-purple-600">
+                    Gestão visual
+                  </div>
+                </div>
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="executive"
+                className="relative flex flex-col items-center gap-3 p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-green-400 hover:shadow-md transition-all duration-200 data-[state=active]:border-green-500 data-[state=active]:bg-green-50 data-[state=active]:shadow-lg group"
+              >
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-green-100 to-green-200 group-data-[state=active]:from-green-500 group-data-[state=active]:to-green-600 transition-all">
+                  <BarChart3 className="w-7 h-7 text-green-600 group-data-[state=active]:text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-sm text-gray-900 group-data-[state=active]:text-green-700">
+                    Dashboard Executivo
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1 group-data-[state=active]:text-green-600">
+                    Métricas estratégicas
+                  </div>
+                </div>
+              </TabsTrigger>
+            </TabsList>
+          </CardContent>
+        </Card>
 
         {/* Visão Geral */}
         <TabsContent value="overview" className="space-y-6">
