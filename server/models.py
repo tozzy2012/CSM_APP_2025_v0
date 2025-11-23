@@ -201,3 +201,23 @@ class Task(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     created_by = Column(String(255))
+
+
+class Playbook(Base):
+    """Modelo de Playbook"""
+    __tablename__ = "playbooks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    content = Column(Text)
+    category = Column(String(100))
+    tags = Column(JSON, default=[])
+    version = Column(String(50), default="1.0")
+    author = Column(String(255))
+    views = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    
+    # Metadados
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

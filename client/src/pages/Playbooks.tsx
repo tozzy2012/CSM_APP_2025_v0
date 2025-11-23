@@ -1,488 +1,152 @@
-/**
- * Playbooks Page - Knowledge Base & Documentation
- */
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { usePlaybooksContext } from "@/contexts/PlaybooksContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Plus, Search, BookOpen, Eye, Clock, MoreVertical, Edit, Trash } from "lucide-react";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Plus, BookOpen, Edit, Trash2, Eye, Search } from "lucide-react";
-import { toast } from "sonner";
-import { usePlaybooks, PlaybookDoc } from "@/hooks/usePlaybooks";
-
-const CATEGORIES = [
-    { value: "all", label: "Todas Categorias" },
-    { value: "onboarding", label: "Onboarding" },
-    { value: "renewal", label: "Renovação" },
-    { value: "expansion", label: "Expansão" },
-    { value: "support", label: "Suporte" },
-    { value: "training", label: "Treinamento" },
-    { value: "best-practices", label: "Melhores Práticas" },
-];
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Playbooks() {
-    const {
-        playbooks,
-        loading,
-        error,
-        createPlaybook,
-        updatePlaybook,
-        deletePlaybook,
-        incrementViews,
-    } = usePlaybooks();
+    const [location, setLocation] = useLocation();
+    const { playbooks, loading, deletePlaybook } = usePlaybooksContext();
+    const [searchTerm, setSearchTerm] = useState("");
 
-    console.log("📊 Playbooks.tsx - Rendering with playbooks:", playbooks);
-    console.log("📊 Playbooks.tsx - Playbooks length:", playbooks.length);
-    console.log("📊 Playbooks.tsx - Loading:", loading, "Error:", error);
-
-    // Monitor changes to playbooks array
-    useEffect(() => {
-        console.log("✨ Playbooks.tsx - useEffect triggered! Playbooks changed to:", playbooks);
-        console.log("✨ Playbooks.tsx - New length:", playbooks.length);
-    }, [playbooks]);
-
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [editingPlaybook, setEditingPlaybook] = useState<PlaybookDoc | null>(
-        null
+    const filteredPlaybooks = playbooks.filter(
+        (p) =>
+            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("all");
 
-    // Form state
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        content: "",
-        category: "onboarding",
-        tags: [] as string[],
-        version: "1.0",
-    });
-
-    // Filtrar playbooks
-    const filteredPlaybooks = playbooks.filter((playbook) => {
-        const matchesSearch =
-            playbook.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            playbook.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory =
-            selectedCategory === "all" || playbook.category === selectedCategory;
-        return matchesSearch && matchesCategory;
-    });
-
-    console.log("📊 Playbooks.tsx - Filtered playbooks:", filteredPlaybooks);
-    console.log("📊 Playbooks.tsx - Filtered length:", filteredPlaybooks.length);
-    console.log("📊 Playbooks.tsx - Search query:", searchQuery, "Category:", selectedCategory);
-
-    // Stats
-    const stats = {
-        total: playbooks.length,
-        byCategory: CATEGORIES.slice(1).map((cat) => ({
-            category: cat.label,
-            count: playbooks.filter((p) => p.category === cat.value).length,
-        })),
-        totalViews: playbooks.reduce((sum, p) => sum + (p.views || 0), 0),
-    };
-
-    console.log("📊 Playbooks.tsx - Stats:", stats);
-
-    // Criar playbook
-    const handleCreatePlaybook = async () => {
-        if (!formData.name) {
-            toast.error("Nome do playbook é obrigatório");
-            return;
-        }
-
-        const result = await createPlaybook({
-            name: formData.name,
-            description: formData.description,
-            content: formData.content,
-            category: formData.category,
-            tags: formData.tags,
-            version: formData.version,
-            author: "", // Will be set by backend
-            is_active: true,
-        });
-
-        if (result) {
-            setIsCreateOpen(false);
-            setFormData({
-                name: "",
-                description: "",
-                content: "",
-                category: "onboarding",
-                tags: [],
-                version: "1.0",
-            });
-            toast.success("Playbook criado com sucesso!");
-        } else {
-            toast.error("Erro ao criar playbook");
-        }
-    };
-
-    // Editar playbook
-    const handleEditPlaybook = async () => {
-        if (!editingPlaybook) return;
-
-        try {
-            await updatePlaybook(editingPlaybook.id, {
-                name: formData.name,
-                description: formData.description,
-                content: formData.content,
-                category: formData.category,
-                tags: formData.tags,
-                version: formData.version,
-            });
-            setIsEditOpen(false);
-            setEditingPlaybook(null);
-            toast.success("Playbook atualizado com sucesso!");
-        } catch (err) {
-            toast.error("Erro ao atualizar playbook");
-        }
-    };
-
-    // Deletar playbook
-    const handleDeletePlaybook = async (id: string) => {
-        if (!confirm("Tem certeza que deseja deletar este playbook?")) return;
-
-        try {
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (confirm("Tem certeza que deseja excluir este playbook?")) {
             await deletePlaybook(id);
-            toast.success("Playbook deletado com sucesso!");
-        } catch (err) {
-            toast.error("Erro ao deletar playbook");
         }
     };
-
-    // Abrir dialog de edição
-    const openEditDialog = (playbook: PlaybookDoc) => {
-        setEditingPlaybook(playbook);
-        setFormData({
-            name: playbook.name,
-            description: playbook.description || "",
-            content: playbook.content || "",
-            category: playbook.category || "onboarding",
-            tags: playbook.tags || [],
-            version: playbook.version || "1.0",
-        });
-        setIsEditOpen(true);
-    };
-
-    if (loading && playbooks.length === 0) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <p className="text-muted-foreground">Carregando playbooks...</p>
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">Playbooks</h1>
-                    <p className="text-muted-foreground mt-1">
-                        Base de conhecimento e documentação
+                    <h1 className="text-3xl font-bold tracking-tight">Biblioteca de Playbooks</h1>
+                    <p className="text-muted-foreground mt-2">
+                        Gerencie e acesse os processos e melhores práticas da sua empresa.
                     </p>
                 </div>
-
-                <Button onClick={() => setIsCreateOpen(true)}>
+                <Button onClick={() => setLocation("/playbooks/new")}>
                     <Plus className="w-4 h-4 mr-2" />
                     Novo Playbook
                 </Button>
             </div>
 
-            {/* Search and Filter */}
+            {/* Search and Filters */}
             <div className="flex gap-4">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar playbooks..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
+                        placeholder="Buscar playbooks por nome, descrição ou categoria..."
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-[200px]">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                            <SelectItem key={cat.value} value={cat.value}>
-                                {cat.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-6">
-                    <p className="text-sm text-muted-foreground">Total Playbooks</p>
-                    <p className="text-3xl font-bold mt-2">{stats.total}</p>
-                </Card>
-                <Card className="p-6">
-                    <p className="text-sm text-muted-foreground">Onboarding</p>
-                    <p className="text-3xl font-bold mt-2 text-blue-600">
-                        {playbooks.filter((p) => p.category === "onboarding").length}
-                    </p>
-                </Card>
-                <Card className="p-6">
-                    <p className="text-sm text-muted-foreground">Renovação</p>
-                    <p className="text-3xl font-bold mt-2 text-green-600">
-                        {playbooks.filter((p) => p.category === "renewal").length}
-                    </p>
-                </Card>
-                <Card className="p-6">
-                    <p className="text-sm text-muted-foreground">Total Visualizações</p>
-                    <p className="text-3xl font-bold mt-2">{stats.totalViews}</p>
-                </Card>
-            </div>
-
-            {/* Playbooks Grid */}
-            {error && (
-                <div className="text-center py-8 text-red-600">
-                    <p>{error}</p>
-                </div>
-            )}
-
-            {filteredPlaybooks.length === 0 && !error ? (
-                <div className="text-center py-12">
+            {/* Grid */}
+            {loading ? (
+                <div className="text-center py-10">Carregando playbooks...</div>
+            ) : filteredPlaybooks.length === 0 ? (
+                <div className="text-center py-20 border rounded-lg bg-muted/10">
                     <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
-                        {searchQuery || selectedCategory !== "all"
-                            ? "Nenhum playbook encontrado com os filtros aplicados"
-                            : "Nenhum playbook criado ainda"}
+                    <h3 className="text-lg font-medium">Nenhum playbook encontrado</h3>
+                    <p className="text-muted-foreground mb-4">
+                        Comece criando seu primeiro playbook para documentar processos.
                     </p>
+                    <Button onClick={() => setLocation("/playbooks/new")}>
+                        Criar Playbook
+                    </Button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredPlaybooks.map((playbook) => (
-                        <Card key={playbook.id} className="p-6 hover:shadow-lg transition-shadow">
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <BookOpen className="w-6 h-6 text-primary" />
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => openEditDialog(playbook)}
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDeletePlaybook(playbook.id)}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <h3 className="text-lg font-semibold mb-2">{playbook.name}</h3>
-                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                                {playbook.description}
-                            </p>
-
-                            <div className="flex items-center gap-2 mb-3 flex-wrap">
-                                {playbook.category && (
-                                    <Badge variant="secondary">{playbook.category}</Badge>
-                                )}
-                                {playbook.tags?.slice(0, 2).map((tag, idx) => (
-                                    <Badge key={idx} variant="outline">
-                                        {tag}
+                        <Card
+                            key={playbook.id}
+                            className="hover:shadow-lg transition-shadow cursor-pointer group"
+                            onClick={() => setLocation(`/playbooks/${playbook.id}`)}
+                        >
+                            <CardHeader>
+                                <div className="flex justify-between items-start">
+                                    <Badge variant="secondary" className="mb-2">
+                                        {playbook.category}
                                     </Badge>
-                                ))}
-                            </div>
-
-                            <div className="flex items-center justify-between text-sm text-muted-foreground pt-3 border-t">
-                                <span className="flex items-center gap-1">
-                                    <Eye className="w-4 h-4" />
-                                    {playbook.views || 0} views
-                                </span>
-                                <span>v{playbook.version}</span>
-                            </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mt-2 -mr-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                                <MoreVertical className="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setLocation(`/playbooks/${playbook.id}/edit`); }}>
+                                                <Edit className="w-4 h-4 mr-2" />
+                                                Editar
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem className="text-red-600" onClick={(e) => handleDelete(playbook.id, e)}>
+                                                <Trash className="w-4 h-4 mr-2" />
+                                                Excluir
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                                <CardTitle className="line-clamp-1">{playbook.name}</CardTitle>
+                                <CardDescription className="line-clamp-2 h-10">
+                                    {playbook.description}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-wrap gap-2">
+                                    {playbook.tags?.slice(0, 3).map((tag) => (
+                                        <Badge key={tag} variant="outline" className="text-xs">
+                                            {tag}
+                                        </Badge>
+                                    ))}
+                                    {playbook.tags?.length > 3 && (
+                                        <Badge variant="outline" className="text-xs">
+                                            +{playbook.tags.length - 3}
+                                        </Badge>
+                                    )}
+                                </div>
+                            </CardContent>
+                            <CardFooter className="text-xs text-muted-foreground border-t pt-4 flex justify-between">
+                                <div className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {playbook.updatedAt && formatDistanceToNow(new Date(playbook.updatedAt), { addSuffix: true, locale: ptBR })}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Eye className="w-3 h-3" />
+                                    {playbook.views}
+                                </div>
+                            </CardFooter>
                         </Card>
                     ))}
                 </div>
             )}
-
-            {/* Create Dialog */}
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                        <DialogTitle>Criar Novo Playbook</DialogTitle>
-                        <DialogDescription>
-                            Adicione um novo documento à base de conhecimento
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Nome do Playbook *</Label>
-                            <Input
-                                id="name"
-                                value={formData.name}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, name: e.target.value })
-                                }
-                                placeholder="Ex: Processo de Onboarding"
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="description">Descrição</Label>
-                            <Textarea
-                                id="description"
-                                value={formData.description}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, description: e.target.value })
-                                }
-                                placeholder="Breve descrição do playbook..."
-                                rows={3}
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="category">Categoria</Label>
-                            <Select
-                                value={formData.category}
-                                onValueChange={(value) =>
-                                    setFormData({ ...formData, category: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {CATEGORIES.slice(1).map((cat) => (
-                                        <SelectItem key={cat.value} value={cat.value}>
-                                            {cat.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="content">Conteúdo</Label>
-                            <Textarea
-                                id="content"
-                                value={formData.content}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, content: e.target.value })
-                                }
-                                placeholder="Conteúdo do playbook (suporta Markdown)..."
-                                rows={6}
-                            />
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleCreatePlaybook}>Criar Playbook</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* Edit Dialog */}
-            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                        <DialogTitle>Editar Playbook</DialogTitle>
-                        <DialogDescription>
-                            Atualize as informações do playbook
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-name">Nome do Playbook *</Label>
-                            <Input
-                                id="edit-name"
-                                value={formData.name}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, name: e.target.value })
-                                }
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-description">Descrição</Label>
-                            <Textarea
-                                id="edit-description"
-                                value={formData.description}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, description: e.target.value })
-                                }
-                                rows={3}
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-category">Categoria</Label>
-                            <Select
-                                value={formData.category}
-                                onValueChange={(value) =>
-                                    setFormData({ ...formData, category: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {CATEGORIES.slice(1).map((cat) => (
-                                        <SelectItem key={cat.value} value={cat.value}>
-                                            {cat.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-content">Conteúdo</Label>
-                            <Textarea
-                                id="edit-content"
-                                value={formData.content}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, content: e.target.value })
-                                }
-                                rows={6}
-                            />
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleEditPlaybook}>Salvar Alterações</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

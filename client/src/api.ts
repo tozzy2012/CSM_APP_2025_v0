@@ -9,8 +9,10 @@ const getApiBaseUrl = () => {
   if (envUrl && envUrl !== "http://localhost:8000") {
     return envUrl;
   }
+  // For non-localhost (e.g. network IP or Cloudflare domain), use relative path
+  // This allows the Vite proxy to handle the request to the backend
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return `http://${window.location.hostname}:8000`;
+    return "";
   }
   return "http://localhost:8000";
 };

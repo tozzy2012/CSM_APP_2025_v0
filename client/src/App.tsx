@@ -128,7 +128,7 @@ function Router() {
         )}
       />
       <Route
-        path="/playbooks/:id/edit"
+        path="/playbooks/new"
         component={() => (
           <ProtectedRoute>
             <DashboardLayout>
@@ -138,11 +138,21 @@ function Router() {
         )}
       />
       <Route
-        path="/playbooks/:id"
-        component={() => (
+        path="/playbooks/:id/edit"
+        component={({ params }) => (
           <ProtectedRoute>
             <DashboardLayout>
-              <PlaybookView />
+              <PlaybookEditor id={params.id} />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/playbooks/:id"
+        component={({ params }) => (
+          <ProtectedRoute>
+            <DashboardLayout>
+              <PlaybookView id={params.id} />
             </DashboardLayout>
           </ProtectedRoute>
         )}

@@ -23,6 +23,12 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 3003,
     strictPort: false,
+    allowedHosts: [
+      "csapp.unraidlab.online",
+      "localhost",
+      "127.0.0.1",
+      "192.168.88.14"
+    ],
     proxy: {
       '/api': {
         target: process.env.VITE_API_TARGET || 'http://localhost:8000',

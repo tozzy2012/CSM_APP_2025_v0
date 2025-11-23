@@ -976,7 +976,6 @@ async def delete_task(
     tags=["Playbooks"]
 )
 async def list_playbooks(
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Listar todos os playbooks"""
