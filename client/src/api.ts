@@ -1,9 +1,25 @@
 /**
- * API Client Configuration
+ * API Client Configuration - Updated for network access
  * Configuração centralizada para chamadas à API Gateway
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  // Ignore localhost env var to allow dynamic detection
+  if (envUrl && envUrl !== "http://localhost:8000") {
+    return envUrl;
+  }
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return `http://${window.location.hostname}:8000`;
+  }
+  return "http://localhost:8000";
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🚀 API_BASE_URL configured as:', API_BASE_URL);
+console.log('📦 import.meta.env.VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('🌐 Current hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
 
 export interface ApiError {
   message: string;

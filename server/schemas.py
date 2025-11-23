@@ -82,7 +82,7 @@ class Address(BaseModel):
 
 class ClientBase(BaseModel):
     """Schema base para Client"""
-    organization_id: str = Field(..., alias="organizationId")
+    organization_id: str = Field(..., alias="organizationId", min_length=1)
     name: str = Field(..., min_length=1, max_length=255)
     legal_name: str = Field(..., alias="legalName", min_length=1, max_length=255)
     cnpj: str = Field(..., min_length=1, max_length=18)

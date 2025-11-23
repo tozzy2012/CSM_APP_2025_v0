@@ -22,7 +22,11 @@ export interface Account {
     updatedAt?: string;
 }
 
-const API_URL = "http://localhost:8000/api/v1";
+const API_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? `http://${window.location.hostname}:8000`
+    : "http://localhost:8000";
+
+const API_URL = `${API_BASE}/api/v1`;
 
 export function useAccounts() {
     const [accounts, setAccounts] = useState<Account[]>([]);

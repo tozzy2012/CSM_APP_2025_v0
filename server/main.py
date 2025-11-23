@@ -40,11 +40,13 @@ app.add_middleware(
     allow_origins=[
         *settings.CORS_ORIGINS,
     ],
+    allow_origin_regex=r"https?://.*",  # Allow all http/https origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 # --- fim CORS ---
+# Force reload
 
 # EVENTOS DE INICIALIZAÇÃO E SHUTDOWN
 # ============================================================================
