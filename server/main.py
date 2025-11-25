@@ -93,6 +93,70 @@ async def root():
     }
 
 
+
+# ============================================================================
+# ROTAS DE SSO AUTHENTICATION (WorkOS)
+# ============================================================================
+
+import sso_auth
+import secrets
+
+@app.post(
+    f"{settings.API_PREFIX}/auth/sso/authorize",
+    summary="Get SSO Authorization URL",
+    description="Get WorkOS authorization URL for SSO login"
+)
+async def sso_authorize(request: schemas.SSOAuthorizeRequest):
+    """Get SSO authorization URL"""
+    try:
+        # Generate state for CSRF protection
+        state = secrets.token_urlsafe(32)
+        
+        # Get authorization URL from WorkOS
+        authorization_url = sso_auth.get_authorization_url(
+            provider=request.provider,
+            state=state
+        )
+        
+        return {
+            "authorization_url": authorization_url,
+            "state": state
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating SSO authorization URL: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@app.get(
+    f"{settings.API_PREFIX}/auth/sso/callback",
+    summary="SSO Callback",
+    description="Handle SSO callback from WorkOS"
+)
+async def sso_callback(
+    code: str = Query(..., description="Authorization code from WorkOS"),
+    db: Session = Depends(get_db)
+):
+    """Handle SSO callback"""
+    try:
+        # Exchange code for user profile and create/update user
+        result = sso_auth.handle_sso_callback(code, db)
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in SSO callback: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
 # ============================================================================
 # ROTAS DE CLIENTS
 # ============================================================================
@@ -101,18 +165,14 @@ async def root():
     f"{settings.API_PREFIX}/clients",
     response_model=List[schemas.ClientResponse],
     summary="Listar Clients",
-    description="Retorna lista de clients filtrados por organização"
+    description="Retorna lista de clients"
 )
 async def list_clients(
-    organization_id: Optional[str] = Query(None, description="Filtrar por organização"),
     db: Session = Depends(get_db)
 ):
-    """Lista todos os clients, opcionalmente filtrados por organização"""
+    """Lista todos os clients"""
     try:
-        query = db.query(models.Client)
-        if organization_id:
-            query = query.filter(models.Client.organization_id == organization_id)
-        clients = query.all()
+        clients = db.query(models.Client).all()
         return clients
     except Exception as e:
         logger.error(f"Erro ao listar clients: {str(e)}")
@@ -289,18 +349,14 @@ async def delete_client(
     f"{settings.API_PREFIX}/accounts",
     response_model=List[schemas.AccountResponse],
     summary="Listar Accounts",
-    description="Retorna lista de accounts filtrados por organização"
+    description="Retorna lista de accounts"
 )
 async def list_accounts(
-    organization_id: Optional[str] = Query(None, description="Filtrar por organização"),
     db: Session = Depends(get_db)
 ):
-    """Lista todos os accounts, opcionalmente filtrados por organização"""
+    """Lista todos os accounts"""
     try:
-        query = db.query(models.Account)
-        if organization_id:
-            query = query.filter(models.Account.organization_id == organization_id)
-        accounts = query.all()
+        accounts = db.query(models.Account).all()
         return accounts
     except Exception as e:
         logger.error(f"Erro ao listar accounts: {str(e)}")
@@ -741,19 +797,32 @@ async def create_activity(
     db: Session = Depends(get_db)
 ):
     """Criar nova activity"""
-    from uuid import uuid4
-    activity_id = str(uuid4())
-    
-    # Use default organization if empty (for super-admin)
-    org_id = current_user.organization_id or "default-org-001"
-    
-    return crud.create_activity(
-        db, 
-        activity, 
-        org_id,
-        activity_id,
-        current_user.user_id
-    )
+    try:
+        from uuid import uuid4
+        activity_id = str(uuid4())
+        
+        # Criar activity dict
+        activity_dict = activity.model_dump(by_alias=False)
+        
+        # Criar model
+        db_activity = models.Activity(
+            id=activity_id,
+            created_by=current_user.user_id,
+            **activity_dict
+        )
+        
+        db.add(db_activity)
+        db.commit()
+        db.refresh(db_activity)
+        
+        return db_activity
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Erro ao criar activity: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao criar activity: {str(e)}"
+        )
 
 
 @app.get(
@@ -764,11 +833,18 @@ async def create_activity(
 async def list_activities(
     skip: int = 0,
     limit: int = 100,
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Listar activities"""
-    return crud.get_activities(db, current_user.organization_id, skip, limit)
+    """Lista todas as activities"""
+    try:
+        activities = db.query(models.Activity).offset(skip).limit(limit).all()
+        return activities
+    except Exception as e:
+        logger.error(f"Erro ao listar activities: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao listar activities: {str(e)}"
+        )
 
 
 @app.get(
@@ -861,21 +937,33 @@ async def create_task(
     db: Session = Depends(get_db)
 ):
     """Criar nova task"""
-    from uuid import uuid4
-    task_id = str(uuid4())
-    
-    # Use default organization if empty (for super-admin)
-    org_id = current_user.organization_id or "default-org-001"
-    
-    logger.info(f"Creating task for org {org_id}, account {task.account_id}")
-    
-    return crud.create_task(
-        db, 
-        task, 
-        org_id,
-        task_id,
-        current_user.user_id
-    )
+    try:
+        from uuid import uuid4
+        task_id = str(uuid4())
+        
+        # Criar task dict
+        task_dict = task.model_dump(by_alias=False)
+        
+        # Criar model
+        db_task = models.Task(
+            id=task_id,
+            created_by=current_user.user_id,
+            **task_dict
+        )
+        
+        db.add(db_task)
+        db.commit()
+        db.refresh(db_task)
+        
+        logger.info(f"Task criada com sucesso: {task_id}")
+        return db_task
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Erro ao criar task: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao criar task: {str(e)}"
+        )
 
 
 @app.get(
@@ -886,11 +974,18 @@ async def create_task(
 async def list_tasks(
     skip: int = 0,
     limit: int = 100,
-    current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Listar tasks"""
-    return crud.get_tasks(db, current_user.organization_id, skip, limit)
+    """Lista todas as tasks"""
+    try:
+        tasks = db.query(models.Task).offset(skip).limit(limit).all()
+        return tasks
+    except Exception as e:
+        logger.error(f"Erro ao listar tasks: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao listar tasks: {str(e)}"
+        )
 
 
 @app.get(

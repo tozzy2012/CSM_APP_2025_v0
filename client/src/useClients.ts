@@ -21,14 +21,13 @@ export interface ClientContact {
 
 export interface Client {
   id: string;
-  organizationId: string; // Organização dona deste cliente
   // Dados da Empresa
   name: string; // Nome Fantasia
   legalName: string; // Razão Social
   cnpj: string;
   industry: string;
   website: string;
-  
+
   // Endereço
   address: {
     street: string;
@@ -40,22 +39,22 @@ export interface Client {
     zipCode: string;
     country: string;
   };
-  
+
   // Informações Comerciais
   companySize: "1-10" | "11-50" | "51-200" | "201-500" | "501-1000" | "1000+";
   revenue: string; // Faturamento anual
   foundedYear: number;
-  
+
   // Mapa de Poder (Stakeholders)
   powerMap: PowerMapContact[];
-  
+
   // Contatos Múltiplos
   contacts: ClientContact[];
-  
+
   // Informações Adicionais
   notes: string;
   tags: string[];
-  
+
   // Metadados
   createdAt: string;
   updatedAt: string;

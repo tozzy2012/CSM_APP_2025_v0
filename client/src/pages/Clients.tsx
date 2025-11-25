@@ -174,7 +174,7 @@ export default function Clients() {
                       </div>
 
                       {/* Localização */}
-                      {client.address.city && (
+                      {client.address?.city && (
                         <div className="flex items-start gap-2">
                           <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
                           <div>

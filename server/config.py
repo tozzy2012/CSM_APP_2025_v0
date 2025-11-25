@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     KINDE_CLIENT_ID: Optional[str] = os.getenv("KINDE_CLIENT_ID")
     KINDE_CLIENT_SECRET: Optional[str] = os.getenv("KINDE_CLIENT_SECRET")
     
+    # WorkOS SSO
+    WORKOS_API_KEY: str = os.getenv("WORKOS_API_KEY", "")
+    WORKOS_CLIENT_ID: str = os.getenv("WORKOS_CLIENT_ID", "")
+    WORKOS_REDIRECT_URI: str = os.getenv("WORKOS_REDIRECT_URI", "http://localhost:3003/auth/callback")
+    
+    
     # CORS
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",

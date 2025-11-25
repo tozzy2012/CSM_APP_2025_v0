@@ -21,7 +21,6 @@ export interface ClientContact {
 
 export interface Client {
     id: string;
-    organizationId: string; // Organização dona deste cliente
     // Dados da Empresa
     name: string; // Nome Fantasia
     legalName: string; // Razão Social

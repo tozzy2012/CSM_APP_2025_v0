@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useClientsContext, PowerMapContact, ClientContact } from "@/contexts/ClientsContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOrganizations } from "@/hooks/useOrganizations";
 import {
   Dialog,
   DialogContent,
@@ -44,25 +43,15 @@ interface AddClientDialogProps {
 
 export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProps) {
   const { addClient } = useClientsContext();
-  const { organizations } = useOrganizations();
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { currentUser } = useAuth();
 
-  // Organization selection for Super Admin
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState("");
-
   useEffect(() => {
     if (isOpen) {
       setIsSubmitting(false);
-      if (currentUser?.organizationId) {
-        setSelectedOrganizationId(currentUser.organizationId);
-      } else if (organizations.length > 0) {
-        // Default to first organization if none selected
-        setSelectedOrganizationId(organizations[0].id);
-      }
     }
-  }, [isOpen, currentUser, organizations]);
+  }, [isOpen]);
 
   // Dados da Empresa
   const [name, setName] = useState("");
@@ -189,16 +178,10 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
       return;
     }
 
-    if (!selectedOrganizationId) {
-      toast.error("Selecione uma organização");
-      return;
-    }
-
     try {
       console.log("Chamando addClient...");
       setIsSubmitting(true);
       const newClient = await addClient({
-        organizationId: selectedOrganizationId,
         name,
         legalName,
         cnpj,
@@ -290,26 +273,6 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
 
           {/* Aba: Empresa */}
           <TabsContent value="company" className="space-y-4 mt-4">
-            {!currentUser?.organizationId && (
-              <div className="space-y-2">
-                <Label htmlFor="organization">Organização</Label>
-                <Select
-                  value={selectedOrganizationId}
-                  onValueChange={setSelectedOrganizationId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a organização" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
-                        {org.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

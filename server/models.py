@@ -13,6 +13,30 @@ from sqlalchemy.sql import func
 Base = declarative_base()
 
 
+class User(Base):
+    """Modelo de Usuário simplificado"""
+    __tablename__ = "users"
+    
+    id = Column(String(255), primary_key=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=True)  # Nullable for SSO users
+    name = Column(String(255), nullable=False)
+    active = Column(Boolean, default=True, nullable=False)
+    
+    # SSO Fields
+    sso_provider = Column(String(50), nullable=True)  # 'google', 'microsoft', etc
+    sso_user_id = Column(String(255), nullable=True)  # Provider's user ID
+    avatar_url = Column(String(500), nullable=True)
+    email_verified = Column(Boolean, default=False, nullable=False)
+    
+    # Metadados
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relacionamentos
+    # Relacionamentos
+
+
 class Tenant(Base):
     """Modelo de Tenant (Organização)"""
     __tablename__ = "tenants"
@@ -34,11 +58,10 @@ class Tenant(Base):
 
 
 class Client(Base):
-    """Modelo de Cliente (usado pela nova funcionalidade)"""
+    """Modelo de Cliente"""
     __tablename__ = "clients"
     
     id = Column(String(255), primary_key=True)
-    organization_id = Column(String(255), nullable=False)
     
     # Dados da Empresa
     name = Column(String(255), nullable=False)  # Nome Fantasia
@@ -74,7 +97,6 @@ class Account(Base):
     __tablename__ = "accounts"
     
     id = Column(String(255), primary_key=True)
-    organization_id = Column(String(255), nullable=False)
     client_id = Column(String(255), nullable=False)
     
     # Dados do Account
@@ -153,7 +175,6 @@ class Activity(Base):
     __tablename__ = "activities"
     
     id = Column(String(255), primary_key=True)
-    organization_id = Column(String(255), nullable=False)
     account_id = Column(String(255), ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
     
     # Dados da Atividade
@@ -181,7 +202,6 @@ class Task(Base):
     __tablename__ = "tasks"
     
     id = Column(String(255), primary_key=True)
-    organization_id = Column(String(255), nullable=False)
     account_id = Column(String(255), ForeignKey("accounts.id", ondelete="CASCADE"), nullable=True)
     
     # Dados da Tarefa

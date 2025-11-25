@@ -15,8 +15,8 @@ import { HealthScoreProvider } from "./contexts/HealthScoreContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import SSOCallback from "./pages/SSOCallback";
 import Admin from "./pages/Admin";
-import SuperAdmin from "./pages/SuperAdmin";
 import Clients from "./pages/Clients";
 import ClientDetails from "./pages/ClientDetails";
 import Dashboard from "./pages/Dashboard";
@@ -38,6 +38,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
+      <Route path="/auth/callback" component={SSOCallback} />
       <Route
         path="/admin"
         component={() => (
@@ -48,16 +49,7 @@ function Router() {
           </ProtectedRoute>
         )}
       />
-      <Route
-        path="/super-admin"
-        component={() => (
-          <ProtectedRoute requiredRole={UserRole.SUPER_ADMIN}>
-            <DashboardLayout hideHealthScoreButton>
-              <SuperAdmin />
-            </DashboardLayout>
-          </ProtectedRoute>
-        )}
-      />
+
       <Route
         path="/team"
         component={() => (

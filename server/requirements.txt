@@ -13,3 +13,4 @@ joblib
 openai
 email-validator
 pydantic[email]
+workos==2.0.0

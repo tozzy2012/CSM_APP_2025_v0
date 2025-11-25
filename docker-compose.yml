@@ -54,6 +54,10 @@ services:
       JWT_SECRET: your-secret-key-change-in-production
       LOG_LEVEL: INFO
       CORS_ORIGINS: '["http://localhost:3003", "http://localhost:3000"]'
+      # WorkOS SSO
+      WORKOS_API_KEY: ${WORKOS_API_KEY:-}
+      WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:-}
+      WORKOS_REDIRECT_URI: ${WORKOS_REDIRECT_URI}
     ports:
       - "8000:8000"
     depends_on:

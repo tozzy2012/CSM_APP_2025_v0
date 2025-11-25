@@ -74,7 +74,6 @@ export default function AddActivityDialog({
       }
 
       await createActivity({
-        organizationId: currentUser?.organizationId || "",
         ...formData,
         accountId: formData.accountId,
         createdBy: formData.assignee,

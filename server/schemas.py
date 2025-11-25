@@ -82,7 +82,6 @@ class Address(BaseModel):
 
 class ClientBase(BaseModel):
     """Schema base para Client"""
-    organization_id: str = Field(..., alias="organizationId", min_length=1)
     name: str = Field(..., min_length=1, max_length=255)
     legal_name: str = Field(..., alias="legalName", min_length=1, max_length=255)
     cnpj: str = Field(..., min_length=1, max_length=18)
@@ -140,7 +139,6 @@ class ClientResponse(ClientBase):
 
 class AccountBase(BaseModel):
     """Schema base para Account"""
-    organization_id: str = Field(..., alias="organizationId")
     client_id: str = Field(..., alias="clientId")
     name: str = Field(..., min_length=1, max_length=255)
     industry: Optional[str] = None
@@ -371,7 +369,6 @@ class ActivityUpdate(BaseModel):
 class ActivityResponse(ActivityBase):
     """Schema de resposta de Activity"""
     id: str
-    organization_id: str
     account_id: str
     completed_at: Optional[datetime] = None
     created_at: datetime
@@ -431,7 +428,6 @@ class TaskUpdate(BaseModel):
 class TaskResponse(TaskBase):
     """Schema de resposta de Task"""
     id: str
-    organization_id: str
     account_id: Optional[str] = None
     completed_at: Optional[datetime] = None
     created_at: datetime
@@ -443,3 +439,28 @@ class TaskResponse(TaskBase):
         populate_by_name=True,
         from_attributes=True
     )
+
+# ============================================================================
+# SSO AUTHENTICATION SCHEMAS
+# ============================================================================
+
+class SSOAuthorizeRequest(BaseModel):
+    """Request para iniciar SSO login"""
+    provider: str = Field(..., description="OAuth provider (GoogleOAuth, MicrosoftOAuth, etc)")
+
+
+class SSOUserInfo(BaseModel):
+    """Informações do usuário SSO"""
+    id: str
+    email: str
+    name: str
+    avatar_url: Optional[str] = None
+    sso_provider: Optional[str] = None
+    email_verified: bool = False
+
+
+class SSOAuthResponse(BaseModel):
+    """Resposta da autenticação SSO"""
+    access_token: str
+    token_type: str = "bearer"
+    user: SSOUserInfo

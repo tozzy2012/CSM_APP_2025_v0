@@ -14,7 +14,6 @@ import {
   LogOut,
   Building2,
   Key,
-  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -129,21 +128,6 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
               </Link>
             );
           })}
-
-          {/* Super Admin - Only for SUPER_ADMIN role */}
-          {currentUser?.role === UserRole.SUPER_ADMIN && (
-            <Link href="/super-admin">
-              <a
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${location === "/super-admin"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
-              >
-                <Shield className="w-5 h-5" />
-                <span className="font-medium">Super Admin</span>
-              </a>
-            </Link>
-          )}
         </nav>
 
         <div className="p-4 border-t border-border space-y-2">

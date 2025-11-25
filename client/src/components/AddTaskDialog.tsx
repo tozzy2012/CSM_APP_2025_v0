@@ -72,7 +72,6 @@ export default function AddTaskDialog({
       }
 
       await createTask({
-        organizationId: currentUser?.organizationId || "",
         ...formData,
         accountId: formData.accountId,
         createdBy: formData.assignee,

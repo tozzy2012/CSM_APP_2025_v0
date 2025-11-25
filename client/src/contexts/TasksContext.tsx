@@ -4,7 +4,6 @@ import { apiClient } from "../api";
 
 export interface Task {
   id: string;
-  organizationId: string;
   accountId?: string;
   title: string;
   description?: string;

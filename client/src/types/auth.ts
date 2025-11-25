@@ -13,6 +13,7 @@ export interface User {
   organizationId: string | null;
   createdAt: string;
   active: boolean;
+  avatarUrl?: string;
 }
 
 export interface Organization {

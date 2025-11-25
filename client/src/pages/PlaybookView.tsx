@@ -11,7 +11,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Edit, Calendar, User, Tag } from "lucide-react";
+import { ArrowLeft, Edit, Calendar, User, Tag, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import RichTextEditor from "@/components/RichTextEditor";
