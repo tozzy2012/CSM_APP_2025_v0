@@ -89,9 +89,11 @@ def handle_sso_callback(code: str, db: Session) -> dict:
         )
 
     try:
+        print(f"🔵 [SSO] Exchanging code for profile...")
         # Exchange code for profile
         profile_and_token = sso_client.get_profile_and_token(code)
         profile = profile_and_token.profile
+        print(f"🟢 [SSO] Profile received: {profile.email}")
        
         # Extract user info
         email = profile.email
@@ -101,10 +103,12 @@ def handle_sso_callback(code: str, db: Session) -> dict:
         last_name = profile.last_name or ""
         name = f"{first_name} {last_name}".strip() or email.split('@')[0]
         
+        print(f"🔵 [SSO] Checking if user exists: {email}")
         # Check if user exists
         user = db.query(User).filter(User.email == email).first()
         
         if user:
+            print(f"🟢 [SSO] User found, updating: {user.id}")
             # Update existing user with SSO info
             user.sso_provider = sso_provider
             user.sso_user_id = sso_user_id
@@ -116,7 +120,22 @@ def handle_sso_callback(code: str, db: Session) -> dict:
                 user.avatar_url = profile.raw_attributes['picture']
                 
         else:
-            # Create new user
+            print(f"🔵 [SSO] User not found. Checking for valid invite: {email}")
+            
+            # Check for pending invite
+            import crud
+            invite = crud.get_invite_by_email(db, email)
+            
+            if not invite:
+                print(f"🔴 [SSO] No pending invite found for {email}. Access denied.")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Acesso negado. Você precisa de um convite para acessar a plataforma."
+                )
+            
+            print(f"🟢 [SSO] Valid invite found! Role: {invite.role}")
+            
+            # Create new user with role from invite
             user = User(
                 id=str(uuid.uuid4()),
                 email=email,
@@ -125,22 +144,35 @@ def handle_sso_callback(code: str, db: Session) -> dict:
                 sso_user_id=sso_user_id,
                 email_verified=True,
                 active=True,
-                password_hash=None  # No password for SSO users
+                password_hash=None,  # No password for SSO users
+                # TODO: Add role field to User model if not exists, or handle permissions
+                # For now assuming role is handled via organization or separate permissions
             )
             
             # Add avatar if available
             if hasattr(profile, 'raw_attributes') and profile.raw_attributes.get('picture'):
                 user.avatar_url = profile.raw_attributes['picture']
+            
+            # If invite has organization, assign it
+            if invite.organization_id:
+                user.organization_id = invite.organization_id
                 
             db.add(user)
+            
+            # Mark invite as accepted
+            crud.update_invite_status(db, invite.id, "accepted", accepted_at=datetime.utcnow())
         
+        print(f"🔵 [SSO] Committing to database...")
         db.commit()
         db.refresh(user)
+        print(f"🟢 [SSO] User saved: {user.id}")
         
         # Generate JWT token
+        print(f"🔵 [SSO] Generating JWT token...")
         access_token = create_access_token(
             data={"sub": user.email, "user_id": user.id}
         )
+        print(f"🟢 [SSO] Token generated successfully")
         
         return {
             "access_token": access_token,
@@ -155,7 +187,14 @@ def handle_sso_callback(code: str, db: Session) -> dict:
             }
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"📛 [SSO] Error: {str(e)}")
+        print(f"📛 [SSO] Exception type: {type(e).__name__}")
+        import traceback
+        print(f"📛 [SSO] Traceback:")
+        traceback.print_exc()
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

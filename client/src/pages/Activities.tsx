@@ -25,13 +25,15 @@ import ActivityCard from "@/components/ActivityCard";
 export default function Activities() {
   const { activities, updateActivityStatus, deleteActivity, getStats } = useActivitiesContext();
   const { getAccount } = useAccountsContext();
-  const { getCSM, getTeam } = useTeamContext();
+  const { csms, getCSM, getTeam } = useTeamContext();
 
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [isEditActivityOpen, setIsEditActivityOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [csmFilter, setCsmFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
 
   const handleEditActivity = (activity: Activity) => {
     setEditingActivity(activity);
@@ -40,10 +42,37 @@ export default function Activities() {
 
   const stats = getStats();
 
+  const checkDateFilter = (activityDate: string, filter: string) => {
+    if (filter === "all") return true;
+
+    const date = new Date(activityDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const activityDay = new Date(date);
+    activityDay.setHours(0, 0, 0, 0);
+
+    if (filter === "today") {
+      return activityDay.getTime() === today.getTime();
+    }
+
+    if (filter === "this-week") {
+      const firstDay = new Date(today);
+      firstDay.setDate(today.getDate() - today.getDay()); // Sunday
+      const lastDay = new Date(today);
+      lastDay.setDate(today.getDate() - today.getDay() + 6); // Saturday
+      return activityDay >= firstDay && activityDay <= lastDay;
+    }
+
+    return true;
+  };
+
   // Filtrar activities
   const filteredActivities = activities.filter((activity) => {
     if (typeFilter !== "all" && activity.type !== typeFilter) return false;
     if (statusFilter !== "all" && activity.status !== statusFilter) return false;
+    if (csmFilter !== "all" && activity.assignee !== csmFilter) return false;
+    if (dateFilter !== "all" && !checkDateFilter(activity.dueDate, dateFilter)) return false;
     return true;
   });
 
@@ -160,8 +189,8 @@ export default function Activities() {
 
       {/* Filters */}
       <Card className="p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
             <label className="text-sm font-medium mb-2 block">Tipo</label>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger>
@@ -178,7 +207,7 @@ export default function Activities() {
             </Select>
           </div>
 
-          <div className="flex-1">
+          <div>
             <label className="text-sm font-medium mb-2 block">Status</label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
@@ -189,6 +218,37 @@ export default function Activities() {
                 <SelectItem value="pending">Pendentes</SelectItem>
                 <SelectItem value="in-progress">Em Andamento</SelectItem>
                 <SelectItem value="completed">Concluídas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">CSM Responsável</label>
+            <Select value={csmFilter} onValueChange={setCsmFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um CSM" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {csms.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Data de Vencimento</label>
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Datas</SelectItem>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="this-week">Esta Semana</SelectItem>
               </SelectContent>
             </Select>
           </div>

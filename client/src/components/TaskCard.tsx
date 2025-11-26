@@ -125,18 +125,22 @@ export default function TaskCard({
             <p className={`text-sm text-muted-foreground ${task.status === "completed" ? "line-through" : ""}`}>
               {task.title}
             </p>
-            {/* Metadata */}
-            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
+
+            {/* CSM e Data - Destaque para o CSM */}
+            <div className="flex items-center gap-4 mt-3">
+              {assigneeName && (
+                <div className="flex items-center gap-2 bg-secondary/50 px-2 py-1 rounded-md">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                    {assigneeName.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{assigneeName}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar className="w-3 h-3" />
                 {formatDate(task.dueDate)}
               </div>
-              {assigneeName && (
-                <div className="flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  {assigneeName}
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -212,7 +216,13 @@ export default function TaskCard({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onStatusChange(task.id, "in-progress")}
+                onClick={async () => {
+                  try {
+                    await onStatusChange(task.id, "in-progress");
+                  } catch (error) {
+                    console.error("Error changing status:", error);
+                  }
+                }}
               >
                 Iniciar
               </Button>
@@ -221,7 +231,13 @@ export default function TaskCard({
               <Button
                 size="sm"
                 variant="default"
-                onClick={() => onStatusChange(task.id, "completed")}
+                onClick={async () => {
+                  try {
+                    await onStatusChange(task.id, "completed");
+                  } catch (error) {
+                    console.error("Error changing status:", error);
+                  }
+                }}
                 className="bg-green-600 hover:bg-green-700"
               >
                 Concluir
@@ -231,7 +247,13 @@ export default function TaskCard({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onStatusChange(task.id, "cancelled")}
+                onClick={async () => {
+                  try {
+                    await onStatusChange(task.id, "cancelled");
+                  } catch (error) {
+                    console.error("Error changing status:", error);
+                  }
+                }}
               >
                 Cancelar
               </Button>

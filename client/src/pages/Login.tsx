@@ -2,7 +2,7 @@
  * Login Page with WorkOS SSO
  * Página de autenticação com Google/Microsoft SSO
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,35 @@ export default function Login() {
     }
   };
 
+  // Invite handling
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteStatus, setInviteStatus] = useState<{ valid: boolean; message?: string }>({ valid: false });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("invite");
+    if (token) {
+      setInviteToken(token);
+      validateInvite(token);
+    }
+  }, []);
+
+  const validateInvite = async (token: string) => {
+    try {
+      const invite = await apiClient.get<{ role: string }>(`/api/v1/invites/validate/${token}`);
+      setInviteStatus({
+        valid: true,
+        message: `Convite válido! Faça login para aceitar o convite de ${invite.role}.`
+      });
+      toast.success("Convite verificado com sucesso!");
+    } catch (error: any) {
+      console.error("Invalid invite:", error);
+      const msg = error.detail || "Convite inválido ou expirado";
+      setInviteStatus({ valid: false, message: msg });
+      toast.error(msg);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -87,6 +116,15 @@ export default function Login() {
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 h-4" />
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {inviteToken && (
+            <Alert variant={inviteStatus.valid ? "default" : "destructive"} className="mb-6 border-primary/50 bg-primary/5">
+              <Mail className="h-4 h-4" />
+              <AlertDescription>
+                {inviteStatus.message || "Verificando convite..."}
+              </AlertDescription>
             </Alert>
           )}
 

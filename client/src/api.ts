@@ -193,3 +193,27 @@ export interface NBARecommendation {
   status: "pending" | "accepted" | "dismissed" | "completed";
   recommended_at: string;
 }
+
+export interface Tenant {
+  tenant_id: string;
+  name: string;
+  subdomain: string;
+  plan: string;
+  status: string;
+  settings: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+// Tenant API methods
+export const getTenant = async (tenantId: string): Promise<Tenant> => {
+  return apiClient.get<Tenant>(`/api/v1/tenants/${tenantId}`);
+};
+
+export const getDefaultTenant = async (): Promise<Tenant> => {
+  return apiClient.get<Tenant>(`/api/v1/tenants/default`);
+};
+
+export const updateTenant = async (tenantId: string, data: Partial<Tenant>): Promise<Tenant> => {
+  return apiClient.put<Tenant>(`/api/v1/tenants/${tenantId}`, data);
+};

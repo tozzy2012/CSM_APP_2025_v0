@@ -8,6 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Calendar,
   TrendingUp,
   Users,
@@ -16,6 +21,7 @@ import {
   Plus,
   CheckCircle2,
   Circle,
+  ChevronDown,
 } from "lucide-react";
 import { useRoute, Link } from "wouter";
 import { useState } from "react";
@@ -30,6 +36,9 @@ import AddActivityDialog from "@/components/AddActivityDialog";
 import AddTaskDialog from "@/components/AddTaskDialog";
 import ActivityCard from "@/components/ActivityCard";
 import TaskCard from "@/components/TaskCard";
+import AccountInsights from "@/components/AccountInsights";
+import HealthScoreChart from "@/components/HealthScoreChart";
+import QuestionResponsesChart from "@/components/QuestionResponsesChart";
 
 export default function AccountDetails() {
   const [, params] = useRoute("/accounts/:id");
@@ -44,6 +53,8 @@ export default function AccountDetails() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const [isIntelligenceOpen, setIsIntelligenceOpen] = useState(false);
+  const [isClientInfoOpen, setIsClientInfoOpen] = useState(false);
 
   // Filter activities and tasks for this account
   const accountActivities = activities.filter(a => a.accountId === accountId);
@@ -168,65 +179,97 @@ export default function AccountDetails() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Informações do Cliente</h3>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm text-muted-foreground">Indústria</p>
-                <p className="font-medium">{account.industry || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Website</p>
-                <p className="font-medium">
-                  {account.website ? (
-                    <a href={account.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                      {account.website}
-                    </a>
-                  ) : "N/A"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Número de Funcionários</p>
-                <p className="font-medium">{account.employees || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Estágio</p>
-                <Badge>{account.stage}</Badge>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Tipo de Conta</p>
-                <Badge variant="outline">{account.type || "N/A"}</Badge>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Status do Pipeline</p>
-                <Badge variant="outline">{account.status || "N/A"}</Badge>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">MRR</p>
-                <p className="font-medium text-green-600">R$ {account.mrr.toLocaleString("pt-BR")}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Valor do Contrato</p>
-                <p className="font-medium">R$ {account.contractValue?.toLocaleString("pt-BR") || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Início do Contrato</p>
-                <p className="font-medium">{account.contractStart ? formatDate(account.contractStart) : "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Fim do Contrato</p>
-                <p className="font-medium">{account.contractEnd ? formatDate(account.contractEnd) : "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Health Score</p>
-                <p className="font-medium">{account.healthScore || 0}/100</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">CSM Responsável</p>
-                <p className="font-medium">{account.csm || "N/A"}</p>
-              </div>
-            </div>
-          </Card>
+          {/* Account Intelligence - Collapsible */}
+          <Collapsible open={isIntelligenceOpen} onOpenChange={setIsIntelligenceOpen}>
+            <Card className="overflow-hidden">
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between p-4 hover:bg-accent/50 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">Account Intelligence</h3>
+                    <Badge variant="secondary" className="ml-2">Insights estratégicos com IA</Badge>
+                  </div>
+                  <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isIntelligenceOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-4 pb-4">
+                  <AccountInsights accountId={accountId} />
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          {/* Client Information - Collapsible */}
+          <Collapsible open={isClientInfoOpen} onOpenChange={setIsClientInfoOpen}>
+            <Card className="overflow-hidden">
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between p-4 hover:bg-accent/50 transition-colors">
+                  <h3 className="text-lg font-semibold">Informações do Cliente</h3>
+                  <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isClientInfoOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-6 pt-2">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Indústria</p>
+                      <p className="font-medium">{account.industry || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Website</p>
+                      <p className="font-medium">
+                        {account.website ? (
+                          <a href={account.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {account.website}
+                          </a>
+                        ) : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Número de Funcionários</p>
+                      <p className="font-medium">{account.employees || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Estágio</p>
+                      <Badge>{account.stage}</Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Tipo de Conta</p>
+                      <Badge variant="outline">{account.type || "N/A"}</Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Status do Pipeline</p>
+                      <Badge variant="outline">{account.status || "N/A"}</Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">MRR</p>
+                      <p className="font-medium text-green-600">R$ {account.mrr.toLocaleString("pt-BR")}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor do Contrato</p>
+                      <p className="font-medium">R$ {account.contractValue?.toLocaleString("pt-BR") || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Início do Contrato</p>
+                      <p className="font-medium">{account.contractStart ? formatDate(account.contractStart) : "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Fim do Contrato</p>
+                      <p className="font-medium">{account.contractEnd ? formatDate(account.contractEnd) : "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Health Score</p>
+                      <p className="font-medium">{account.healthScore || 0}/100</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">CSM Responsável</p>
+                      <p className="font-medium">{account.csm || "N/A"}</p>
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         </TabsContent>
 
         {/* Activities Tab */}
@@ -397,8 +440,15 @@ export default function AccountDetails() {
 
         {/* Health Score Tab */}
         <TabsContent value="health" className="space-y-4">
+          {/* Health Score History Chart */}
+          <HealthScoreChart accountId={accountId} />
+
+          {/* Question Responses Evolution Chart */}
+          <QuestionResponsesChart accountId={accountId} />
+
+          {/* Current Health Score Display */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Health Score</h3>
+            <h3 className="text-lg font-semibold mb-4">Health Score Atual</h3>
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
                 <div className={`w-32 h-32 rounded-full flex items-center justify-center ${getHealthColor(account.healthScore || 0)} bg-opacity-20 mx-auto mb-4`}>

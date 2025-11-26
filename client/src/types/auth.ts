@@ -24,6 +24,13 @@ export interface Organization {
   status?: 'active' | 'inactive';
   createdAt: string;
   active: boolean;
+  aiSettings?: AISettings;
+}
+
+export interface AISettings {
+  openaiApiKey?: string;
+  systemPrompt?: string;
+  creativityLevel?: number; // 0.0 to 1.0
 }
 
 export interface AuthState {

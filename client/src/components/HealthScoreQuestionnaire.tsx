@@ -43,7 +43,7 @@ export default function HealthScoreQuestionnaire({ isOpen, onClose, accountId: i
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!selectedAccountId) {
             toast.error('Selecione um cliente antes de enviar');
             return;
@@ -56,7 +56,7 @@ export default function HealthScoreQuestionnaire({ isOpen, onClose, accountId: i
         }
 
         try {
-            const result = submitResponse(selectedAccountId, responses, 'Current User');
+            const result = await submitResponse(selectedAccountId, responses, 'Current User');
 
             // Mapear classification para healthStatus e status do pipeline
             let healthStatus: 'healthy' | 'at-risk' | 'critical' = 'healthy';
@@ -192,8 +192,8 @@ export default function HealthScoreQuestionnaire({ isOpen, onClose, accountId: i
                                 <div
                                     key={option.value}
                                     className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer hover:bg-accent ${responses[question.id] === option.value
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border'
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-border'
                                         }`}
                                     onClick={() => {
                                         setResponses({

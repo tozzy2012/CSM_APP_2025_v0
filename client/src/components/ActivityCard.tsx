@@ -126,9 +126,8 @@ export default function ActivityCard({
 
   return (
     <div
-      className={`p-4 border rounded-lg transition-all hover:shadow-md border-border ${
-        activity.status === "completed" ? "opacity-75" : ""
-      }`}
+      className={`p-4 border rounded-lg transition-all hover:shadow-md border-border ${activity.status === "completed" ? "opacity-75" : ""
+        }`}
     >
       {/* Header - Cliente como informação principal */}
       <div className="flex items-start justify-between mb-3">
@@ -157,19 +156,21 @@ export default function ActivityCard({
                 {formatDate(activity.dueDate)}
               </div>
               {assigneeName && (
-                <div className="flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  {assigneeName}
+                <div className="flex items-center gap-2 bg-secondary/20 px-2 py-1 rounded-full">
+                  <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                    {assigneeName.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-medium text-foreground">{assigneeName}</span>
                 </div>
               )}
             </div>
           </div>
         </div>
-        
+
         {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           <Badge variant={getStatusColor(activity.status)}>{getStatusLabel(activity.status)}</Badge>
-          
+
           {onEdit && (
             <Button
               size="sm"
@@ -189,7 +190,7 @@ export default function ActivityCard({
               Excluir
             </Button>
           )}
-          
+
           <Button
             size="sm"
             variant="ghost"
@@ -245,7 +246,13 @@ export default function ActivityCard({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onStatusChange(activity.id, "in-progress")}
+                onClick={async () => {
+                  try {
+                    await onStatusChange(activity.id, "in-progress");
+                  } catch (error) {
+                    console.error("Error changing status:", error);
+                  }
+                }}
               >
                 Iniciar
               </Button>
@@ -254,7 +261,13 @@ export default function ActivityCard({
               <Button
                 size="sm"
                 variant="default"
-                onClick={() => onStatusChange(activity.id, "completed")}
+                onClick={async () => {
+                  try {
+                    await onStatusChange(activity.id, "completed");
+                  } catch (error) {
+                    console.error("Error changing status:", error);
+                  }
+                }}
                 className="bg-green-600 hover:bg-green-700"
               >
                 Concluir
@@ -264,7 +277,13 @@ export default function ActivityCard({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onStatusChange(activity.id, "cancelled")}
+                onClick={async () => {
+                  try {
+                    await onStatusChange(activity.id, "cancelled");
+                  } catch (error) {
+                    console.error("Error changing status:", error);
+                  }
+                }}
               >
                 Cancelar
               </Button>

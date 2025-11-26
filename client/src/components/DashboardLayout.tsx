@@ -14,6 +14,8 @@ import {
   LogOut,
   Building2,
   Key,
+  ChevronDown,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,15 +40,117 @@ interface DashboardLayoutProps {
   hideHealthScoreButton?: boolean;
 }
 
-const navItems = [
+interface NavItem {
+  path: string;
+  label: string;
+  icon: any;
+  children?: NavItem[];
+}
+
+const navItems: NavItem[] = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/clients", label: "Clientes", icon: Building2 },
-  { path: "/accounts", label: "Accounts", icon: Users },
-  { path: "/tasks", label: "Tasks", icon: CheckSquare },
-  { path: "/activities", label: "Activities", icon: Activity },
+  {
+    path: "/accounts",
+    label: "Accounts",
+    icon: Users,
+    children: [
+      { path: "/tasks", label: "Tasks", icon: CheckSquare },
+      { path: "/activities", label: "Activities", icon: Activity },
+    ]
+  },
   { path: "/playbooks", label: "Playbooks", icon: BookOpen },
+  { path: "/invites", label: "Convites", icon: Mail },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
+
+// NavMenuItem Component with collapsible functionality
+function NavMenuItem({ item, location }: { item: NavItem; location: string }) {
+  const [isOpen, setIsOpen] = useState(true);
+  const Icon = item.icon;
+  const isActive = location === item.path || location.startsWith(item.path + "/");
+  const hasActiveChild = item.children?.some(child =>
+    location === child.path || location.startsWith(child.path + "/")
+  );
+
+  // If item has children, render collapsible menu
+  if (item.children) {
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center">
+          <Link href={item.path} className="flex-1">
+            <a
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+                ? "bg-primary text-primary-foreground"
+                : hasActiveChild
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="font-medium flex-1">{item.label}</span>
+            </a>
+          </Link>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={`p-2 mr-2 rounded-md transition-all duration-200 ${hasActiveChild || isActive
+              ? "text-primary-foreground hover:bg-primary/90"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
+            aria-label={isOpen ? "Retrair submenu" : "Expandir submenu"}
+          >
+            <ChevronDown
+              className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                }`}
+            />
+          </button>
+        </div>
+
+        {/* Collapsible submenu with smooth animation */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+            }`}
+        >
+          <div className="ml-4 pl-4 border-l-2 border-border space-y-1 py-1">
+            {item.children.map((child) => {
+              const ChildIcon = child.icon;
+              const isChildActive = location === child.path || location.startsWith(child.path + "/");
+
+              return (
+                <Link key={child.path} href={child.path}>
+                  <a
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${isChildActive
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1"
+                      }`}
+                  >
+                    <ChildIcon className="w-4 h-4" />
+                    <span className="font-medium text-sm">{child.label}</span>
+                  </a>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular menu item without children
+  return (
+    <Link href={item.path}>
+      <a
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          }`}
+      >
+        <Icon className="w-5 h-5" />
+        <span className="font-medium">{item.label}</span>
+      </a>
+    </Link>
+  );
+}
 
 export default function DashboardLayout({ children, hideHealthScoreButton = false }: DashboardLayoutProps) {
   const [location, setLocation] = useLocation();
@@ -109,25 +213,10 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
           <p className="text-sm text-muted-foreground mt-1">Customer Success Platform</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.path || location.startsWith(item.path + "/");
-
-            return (
-              <Link key={item.path} href={item.path}>
-                <a
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </a>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {navItems.map((item) => (
+            <NavMenuItem key={item.path} item={item} location={location} />
+          ))}
         </nav>
 
         <div className="p-4 border-t border-border space-y-2">

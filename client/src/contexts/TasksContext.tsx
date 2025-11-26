@@ -84,10 +84,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   };
 
   const updateTaskStatus = async (id: string, status: Task["status"]) => {
-    await updateTask(id, {
-      status,
-      completedAt: status === "completed" ? new Date().toISOString() : undefined
-    });
+    await updateTask(id, { status });
   };
 
   const deleteTask = async (id: string) => {

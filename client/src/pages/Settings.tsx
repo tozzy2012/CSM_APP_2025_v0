@@ -36,6 +36,7 @@ import TagsManagement from "@/components/TagsManagement";
 import StatusManagement from "@/components/StatusManagement";
 import HealthScoreSettings from "@/components/HealthScoreSettings";
 import OnboardingSettings from "@/components/OnboardingSettings";
+import AISettings from "@/components/AISettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganizations } from "@/hooks/useOrganizations";
 
@@ -48,7 +49,8 @@ type SettingsSection =
   | "team"
   | "tags"
   | "notifications"
-  | "integrations";
+  | "integrations"
+  | "ai";
 
 export default function Settings() {
   const { currentOrganization } = useAuth();
@@ -59,7 +61,7 @@ export default function Settings() {
   const [companyName, setCompanyName] = useState(() => {
     return currentOrganization?.name || "Zapper CS Platform";
   });
-  
+
   // Atualizar companyName quando organização mudar
   useEffect(() => {
     if (currentOrganization?.name) {
@@ -86,13 +88,13 @@ export default function Settings() {
       toast.error("Organização não encontrada");
       return;
     }
-    
+
     // Atualizar nome da organização
     updateOrganization(currentOrganization.id, { name: companyName });
-    
+
     // Salvar timezone no localStorage (configuração global do usuário)
     localStorage.setItem("settings_timezone", timezone);
-    
+
     toast.success("Configurações gerais salvas com sucesso!");
   };
 
@@ -173,6 +175,12 @@ export default function Settings() {
       icon: Zap,
       description: "Conectar serviços externos",
     },
+    {
+      id: "ai" as SettingsSection,
+      label: "Inteligência Artificial",
+      icon: Zap, // Using Zap for now, or could import Bot
+      description: "Configurar OpenAI e Prompts",
+    },
   ];
 
   return (
@@ -198,21 +206,19 @@ export default function Settings() {
                   <button
                     key={item.id}
                     onClick={() => setActiveSection(item.id)}
-                    className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent hover:text-accent-foreground"
-                    }`}
+                    className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-accent hover:text-accent-foreground"
+                      }`}
                   >
                     <Icon className="w-5 h-5 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{item.label}</p>
                       <p
-                        className={`text-xs mt-0.5 ${
-                          isActive
-                            ? "text-primary-foreground/80"
-                            : "text-muted-foreground"
-                        }`}
+                        className={`text-xs mt-0.5 ${isActive
+                          ? "text-primary-foreground/80"
+                          : "text-muted-foreground"
+                          }`}
                       >
                         {item.description}
                       </p>
@@ -636,6 +642,9 @@ export default function Settings() {
               </div>
             </Card>
           )}
+
+          {/* AI Settings */}
+          {activeSection === "ai" && <AISettings />}
         </div>
       </div>
     </div>

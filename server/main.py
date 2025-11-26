@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import traceback
 
@@ -143,14 +143,21 @@ async def sso_callback(
 ):
     """Handle SSO callback"""
     try:
+        logger.info(f"🔵 SSO Callback received with code: {code[:10]}...")
+        
         # Exchange code for user profile and create/update user
         result = sso_auth.handle_sso_callback(code, db)
         
+        logger.info(f"🟢 SSO callback successful for user: {result.get('user', {}).get('email')}")
         return result
-    except HTTPException:
+    except HTTPException as he:
+        logger.error(f"📛 SSO HTTPException: {he.detail}")
         raise
     except Exception as e:
-        logger.error(f"Error in SSO callback: {str(e)}")
+        logger.error(f"📛 Error in SSO callback: {str(e)}")
+        logger.error(f"📛 Exception type: {type(e).__name__}")
+        import traceback
+        logger.error(f"📛 Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -158,8 +165,154 @@ async def sso_callback(
 
 
 # ============================================================================
+# ROTAS DE INVITES
+# ============================================================================
+
+@app.post(
+    f"{settings.API_PREFIX}/invites",
+    response_model=schemas.InviteResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Criar Convite",
+    description="Cria um novo convite e envia email"
+)
+async def create_invite(
+    invite_data: schemas.InviteCreate,
+    # current_user: CurrentUser = Depends(get_current_user), # TODO: Enable auth
+    db: Session = Depends(get_db)
+):
+    """Cria um novo convite"""
+    try:
+        # Check if email already has pending invite
+        existing = crud.get_invite_by_email(db, invite_data.email)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Já existe um convite pendente para este email"
+            )
+            
+        # Check if user already exists
+        user = db.query(models.User).filter(models.User.email == invite_data.email).first()
+        if user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Usuário já cadastrado na plataforma"
+            )
+            
+        # Generate token
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(days=settings.INVITE_EXPIRY_DAYS)
+        
+        # Create invite
+        invite = crud.create_invite(
+            db=db,
+            invite=invite_data,
+            token=token,
+            expires_at=expires_at,
+            invited_by=None # str(current_user.id)
+        )
+        
+        # Send email
+        import email_service
+        sent = await email_service.send_invite_email(
+            to_email=invite.email,
+            invite_token=invite.token,
+            invited_by_name="Admin" # current_user.name
+        )
+        
+        if not sent:
+            logger.warning(f"Failed to send invite email to {invite.email}")
+            
+        return invite
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating invite: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao criar convite: {str(e)}"
+        )
+
+
+@app.get(
+    f"{settings.API_PREFIX}/invites",
+    response_model=List[schemas.InviteResponse],
+    summary="Listar Convites",
+    description="Lista todos os convites"
+)
+async def list_invites(
+    skip: int = 0,
+    limit: int = 100,
+    # current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Lista convites"""
+    return crud.get_invites(db, skip, limit)
+
+
+@app.delete(
+    f"{settings.API_PREFIX}/invites/{{invite_id}}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Revogar Convite",
+    description="Revoga um convite pendente"
+)
+async def revoke_invite(
+    invite_id: UUID,
+    # current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Revoga convite"""
+    success = crud.revoke_invite(db, invite_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Convite não encontrado"
+        )
+    return None
+
+
+@app.get(
+    f"{settings.API_PREFIX}/invites/validate/{{token}}",
+    response_model=schemas.InviteResponse,
+    summary="Validar Token de Convite",
+    description="Verifica se um token de convite é válido"
+)
+async def validate_invite_token(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """Valida token de convite"""
+    invite = crud.get_invite_by_token(db, token)
+    
+    if not invite:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Convite inválido"
+        )
+        
+    if invite.status != "pending":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Este convite já foi {invite.status}"
+        )
+        
+    if invite.expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Este convite expirou"
+        )
+        
+    return invite
+
+
+# ============================================================================
 # ROTAS DE CLIENTS
 # ============================================================================
+
+from routers import tenants, intelligence
+app.include_router(tenants.router, prefix=settings.API_PREFIX)
+app.include_router(intelligence.router)
 
 @app.get(
     f"{settings.API_PREFIX}/clients",
@@ -893,7 +1046,7 @@ async def update_activity(
     db: Session = Depends(get_db)
 ):
     """Atualizar activity"""
-    activity = crud.update_activity(db, activity_id, current_user.organization_id, activity_update)
+    activity = crud.update_activity(db, activity_id, activity_update)
     if not activity:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -1034,7 +1187,7 @@ async def update_task(
     db: Session = Depends(get_db)
 ):
     """Atualizar task"""
-    task = crud.update_task(db, task_id, current_user.organization_id, task_update)
+    task =crud.update_task(db, task_id, task_update)
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -1347,6 +1500,129 @@ async def increment_playbook_views(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============================================================================
+# HEALTH SCORE EVALUATION ROUTES
+# ============================================================================
+
+@app.post(
+    f"{settings.API_PREFIX}/health-scores",
+    response_model=schemas.HealthScoreEvaluationResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Health Scores"]
+)
+async def create_health_score_evaluation(
+    evaluation: schemas.HealthScoreEvaluationCreate,
+    db: Session = Depends(get_db)
+):
+    """Criar avaliação de health score com respostas detalhadas"""
+    try:
+        from uuid import uuid4
+        
+        # Validar se o account exists
+        account = db.query(models.Account).filter(models.Account.id == evaluation.account_id).first()
+        if not account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account não encontrado"
+            )
+        
+        # Calcular scores
+        responses_dict = evaluation.responses
+        scores = list(responses_dict.values())
+        total_score = round(sum(scores) / len(scores)) if scores else 0
+        
+        # Calcular scores por pilar (baseado nas questions do frontend)
+        pilar_questions = {
+            "Adoção e Engajamento": [1, 2],
+            "Percepção de Valor": [3, 4],
+            "Relacionamento e Satisfação": [5, 6],
+            "Saúde Operacional": [7, 8],
+            "Potencial de Crescimento": [9, 10],
+        }
+        
+        pilar_scores = {}
+        for pilar, question_ids in pilar_questions.items():
+            pilar_score_values = [responses_dict.get(q_id, 0) for q_id in question_ids if q_id in responses_dict]
+            if pilar_score_values:
+                pilar_scores[pilar] = round(sum(pilar_score_values) / len(pilar_score_values))
+        
+        # Determinar classificação
+        classification = 'critical'
+        if total_score >= 90:
+            classification = 'champion'
+        elif total_score >= 70:
+            classification = 'healthy'
+        elif total_score >= 50:
+            classification = 'attention'
+        elif total_score >= 30:
+            classification = 'at-risk'
+        
+        # Criar avaliação
+        evaluation_id = str(uuid4())
+        db_evaluation = crud.create_health_score_evaluation(
+            db=db,
+            evaluation_id=evaluation_id,
+            account_id=evaluation.account_id,
+            evaluated_by=evaluation.evaluated_by,
+            total_score=total_score,
+            classification=classification,
+            responses=responses_dict,
+            pilar_scores=pilar_scores
+        )
+        
+        # Atualizar health score do account
+        account.health_score = total_score
+        db.commit()
+        
+        logger.info(f"Health score evaluation created: {evaluation_id} for account {evaluation.account_id} with score {total_score}")
+        
+        return db_evaluation
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Erro ao criar health score evaluation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao criar health score evaluation: {str(e)}"
+        )
+
+
+@app.get(
+    f"{settings.API_PREFIX}/accounts/{{account_id}}/health-scores",
+    response_model=List[schemas.HealthScoreEvaluationResponse],
+    tags=["Health Scores"]
+)
+async def get_account_health_score_history(
+    account_id: str,
+    limit: int = 10,
+    db: Session = Depends(get_db)
+):
+    """Obter histórico de avaliações de health score de um account"""
+    try:
+        # Validar se o account exists
+        account = db.query(models.Account).filter(models.Account.id == account_id).first()
+        if not account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account não encontrado"
+            )
+        
+        evaluations = crud.get_health_score_evaluations(db, account_id, limit)
+        return evaluations
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao buscar histórico de health scores: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar histórico: {str(e)}"
+        )
+
+
 if __name__ == "__main__":
+
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)

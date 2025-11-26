@@ -29,6 +29,7 @@ import PlaybookEditor from "./pages/PlaybookEditor";
 import PlaybookView from "./pages/PlaybookView";
 import Settings from "./pages/Settings";
 import Team from "./pages/Team";
+import Invites from "./pages/Invites";
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { UserRole } from "./types/auth";
@@ -56,6 +57,16 @@ function Router() {
           <ProtectedRoute>
             <DashboardLayout>
               <Team />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/invites"
+        component={() => (
+          <ProtectedRoute requiredRole={UserRole.SUPER_ADMIN}>
+            <DashboardLayout>
+              <Invites />
             </DashboardLayout>
           </ProtectedRoute>
         )}

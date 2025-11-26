@@ -464,3 +464,68 @@ class SSOAuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: SSOUserInfo
+
+
+# ============================================================================
+# HEALTH SCORE EVALUATION SCHEMAS
+# ============================================================================
+
+class HealthScoreEvaluationCreate(BaseModel):
+    """Schema para criação de Avaliação de Health Score"""
+    account_id: str = Field(..., alias="accountId")
+    responses: dict = Field(..., description="Mapeamento de question_id para score")
+    evaluated_by: str = Field(..., alias="evaluatedBy")
+    
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class HealthScoreEvaluationResponse(BaseModel):
+    """Schema de resposta para Avaliação de Health Score"""
+    id: str
+    account_id: str = Field(..., alias="accountId")
+    evaluated_by: str = Field(..., alias="evaluatedBy")
+    evaluation_date: datetime = Field(..., alias="evaluationDate")
+    total_score: int = Field(..., alias="totalScore")
+    classification: str
+    responses: dict
+    pilar_scores: Optional[dict] = Field(None, alias="pilarScores")
+    created_at: datetime = Field(..., alias="createdAt")
+    
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+
+# ============================================================================
+# INVITE SCHEMAS
+# ============================================================================
+
+class InviteBase(BaseModel):
+    """Schema base para Invite"""
+    email: EmailStr
+    role: str
+    organization_id: Optional[str] = Field(None, alias="organizationId")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class InviteCreate(InviteBase):
+    """Schema para criação de Invite"""
+    pass
+
+
+class InviteResponse(InviteBase):
+    """Schema de resposta para Invite"""
+    id: UUID
+    token: str
+    status: str
+    expires_at: datetime = Field(..., alias="expiresAt")
+    created_at: datetime = Field(..., alias="createdAt")
+    accepted_at: Optional[datetime] = Field(None, alias="acceptedAt")
+    invited_by: Optional[UUID] = Field(None, alias="invitedBy")
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+
+class InviteList(BaseModel):
+    """Lista de convites"""
+    items: List[InviteResponse]
+    total: int

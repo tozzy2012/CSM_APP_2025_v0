@@ -86,10 +86,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
   };
 
   const updateActivityStatus = async (id: string, status: Activity["status"]) => {
-    await updateActivity(id, {
-      status,
-      completedAt: status === "completed" ? new Date().toISOString() : undefined
-    });
+    await updateActivity(id, { status });
   };
 
   const deleteActivity = async (id: string) => {

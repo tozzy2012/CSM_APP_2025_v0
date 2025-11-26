@@ -241,3 +241,45 @@ class Playbook(Base):
     # Metadados
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class HealthScoreEvaluation(Base):
+    """Modelo de Avaliação de Health Score"""
+    __tablename__ = "health_score_evaluations"
+    
+    id = Column(String(255), primary_key=True)
+    account_id = Column(String(255), ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
+    
+    # Avaliação
+    evaluated_by = Column(String(255), nullable=False)  # Usuário que fez a avaliação
+    evaluation_date = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Scores
+    total_score = Column(Integer, nullable=False)  # 0-100
+    classification = Column(String(50), nullable=False)  # champion, healthy, attention, at-risk, critical
+    
+    # Respostas detalhadas (JSON)
+    responses = Column(JSON, nullable=False)  # {question_id: score_value}
+    pilar_scores = Column(JSON)  # {pilar_name: average_score}
+    
+    # Metadados
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Invite(Base):
+    """Modelo de Convite"""
+    __tablename__ = "invites"
+
+    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    email = Column(String(255), nullable=False, unique=True)
+    token = Column(String(255), nullable=False, unique=True)
+    role = Column(String(50), nullable=False)
+    organization_id = Column(String(255), nullable=True)
+    invited_by = Column(String(255), ForeignKey("users.id"), nullable=True)
+    status = Column(String(50), nullable=False, default="pending")  # pending, accepted, revoked
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    accepted_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Relacionamentos
+    inviter = relationship("User", foreign_keys=[invited_by])

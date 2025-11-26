@@ -7,6 +7,26 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    {
+      name: 'spaFallback',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          // Don't rewrite API calls
+          if (req.url?.startsWith('/api')) {
+            return next();
+          }
+          // Don't rewrite static assets
+          if (req.url?.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
+            return next();
+          }
+          // For all other routes, serve index.html
+          if (req.url && !req.url.startsWith('/@') && !req.url.includes('.')) {
+            req.url = '/index.html';
+          }
+          next();
+        });
+      },
+    },
   ],
   resolve: {
     alias: {
@@ -35,5 +55,14 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    // Enable history API fallback for SPA routing
+    hmr: {
+      clientPort: 3003,
+    },
+  },
+  // Ensure all non-API routes fallback to index.html
+  preview: {
+    port: 3003,
+    strictPort: false,
   },
 });

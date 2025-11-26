@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     WORKOS_CLIENT_ID: str = os.getenv("WORKOS_CLIENT_ID", "")
     WORKOS_REDIRECT_URI: str = os.getenv("WORKOS_REDIRECT_URI", "http://localhost:3003/auth/callback")
     
+    # Resend (Email)
+    RESEND_API_KEY: Optional[str] = os.getenv("RESEND_API_KEY")
+    FROM_EMAIL: str = os.getenv("FROM_EMAIL", "Zapper CS <noreply@zappercs.com>")
+    INVITE_EXPIRY_DAYS: int = 7
+    
     
     # CORS
     CORS_ORIGINS: List[str] = [
@@ -75,6 +80,7 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = True
         env_file = ".env"
+        extra = "ignore"
 
 
 # Instância global de configurações

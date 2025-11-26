@@ -58,6 +58,9 @@ services:
       WORKOS_API_KEY: ${WORKOS_API_KEY:-}
       WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:-}
       WORKOS_REDIRECT_URI: ${WORKOS_REDIRECT_URI}
+      # Resend (Email)
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      FROM_EMAIL: ${FROM_EMAIL:-}
     ports:
       - "8000:8000"
     depends_on:

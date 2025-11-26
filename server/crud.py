@@ -4,9 +4,12 @@ Camada CRUD - Operações de Banco de Dados
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import func, desc, and_
+from datetime import datetime, timedelta
 import logging
 import models, schemas
+import models, schemas
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -368,9 +371,9 @@ def create_activity(db: Session, activity: schemas.ActivityCreate, organization_
     return db_activity
 
 
-def update_activity(db: Session, activity_id: str, organization_id: str, activity_update: schemas.ActivityUpdate) -> Optional[models.Activity]:
+def update_activity(db: Session, activity_id: str, activity_update: schemas.ActivityUpdate) -> Optional[models.Activity]:
     """Atualizar activity"""
-    db_activity = get_activity(db, activity_id, organization_id)
+    db_activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
     if not db_activity:
         return None
     
@@ -447,9 +450,9 @@ def create_task(db: Session, task: schemas.TaskCreate, organization_id: str, tas
     return db_task
 
 
-def update_task(db: Session, task_id: str, organization_id: str, task_update: schemas.TaskUpdate) -> Optional[models.Task]:
+def update_task(db: Session, task_id: str, task_update: schemas.TaskUpdate) -> Optional[models.Task]:
     """Atualizar task"""
-    db_task = get_task(db, task_id, organization_id)
+    db_task = db.query(models.Task).filter(models.Task.id == task_id).first()
     if not db_task:
         return None
     
@@ -471,3 +474,136 @@ def delete_task(db: Session, task_id: str, organization_id: str) -> bool:
     db.delete(db_task)
     db.commit()
     return True
+
+
+# ============================================================================
+# HEALTH SCORE EVALUATION CRUD
+# ============================================================================
+
+def create_health_score_evaluation(
+    db: Session,
+    evaluation_id: str,
+    account_id: str,
+    evaluated_by: str,
+    total_score: int,
+    classification: str,
+    responses: dict,
+    pilar_scores: dict
+) -> models.HealthScoreEvaluation:
+    """Criar nova avaliação de health score"""
+    db_evaluation = models.HealthScoreEvaluation(
+        id=evaluation_id,
+        account_id=account_id,
+        evaluated_by=evaluated_by,
+        total_score=total_score,
+        classification=classification,
+        responses=responses,
+        pilar_scores=pilar_scores
+    )
+    db.add(db_evaluation)
+    db.commit()
+    db.refresh(db_evaluation)
+    return db_evaluation
+
+
+def get_health_score_evaluations(
+    db: Session,
+    account_id: str,
+    limit: int = 10
+) -> List[models.HealthScoreEvaluation]:
+    """Buscar histórico de avaliações de health score para um account"""
+    return db.query(models.HealthScoreEvaluation).filter(
+        models.HealthScoreEvaluation.account_id == account_id
+    ).order_by(
+        models.HealthScoreEvaluation.evaluation_date.desc()
+    ).limit(limit).all()
+
+
+def get_latest_health_score_evaluation(
+    db: Session,
+    account_id: str
+) -> Optional[models.HealthScoreEvaluation]:
+    """Buscar a avaliação mais recente de health score para um account"""
+    return db.query(models.HealthScoreEvaluation).filter(
+        models.HealthScoreEvaluation.account_id == account_id
+    ).order_by(
+        models.HealthScoreEvaluation.evaluation_date.desc()
+    ).first()
+
+
+# ============================================================================
+# INVITE CRUD
+# ============================================================================
+
+def create_invite(
+    db: Session,
+    invite: schemas.InviteCreate,
+    token: str,
+    expires_at: datetime,
+    invited_by: str = None
+) -> models.Invite:
+    """Criar novo convite"""
+    db_invite = models.Invite(
+        email=invite.email,
+        token=token,
+        role=invite.role,
+        organization_id=invite.organization_id,
+        invited_by=invited_by,
+        expires_at=expires_at
+    )
+    db.add(db_invite)
+    db.commit()
+    db.refresh(db_invite)
+    return db_invite
+
+
+def get_invite_by_token(db: Session, token: str) -> Optional[models.Invite]:
+    """Buscar convite por token"""
+    return db.query(models.Invite).filter(models.Invite.token == token).first()
+
+
+def get_invite_by_email(db: Session, email: str) -> Optional[models.Invite]:
+    """Buscar convite por email (apenas pendentes)"""
+    return db.query(models.Invite).filter(
+        and_(
+            models.Invite.email == email,
+            models.Invite.status == "pending"
+        )
+    ).first()
+
+
+def get_invites(db: Session, skip: int = 0, limit: int = 100) -> List[models.Invite]:
+    """Listar convites"""
+    return db.query(models.Invite).order_by(
+        models.Invite.created_at.desc()
+    ).offset(skip).limit(limit).all()
+
+
+def count_invites(db: Session) -> int:
+    """Contar total de convites"""
+    return db.query(models.Invite).count()
+
+
+def update_invite_status(
+    db: Session,
+    invite_id: UUID,
+    status: str,
+    accepted_at: Optional[datetime] = None
+) -> Optional[models.Invite]:
+    """Atualizar status do convite"""
+    db_invite = db.query(models.Invite).filter(models.Invite.id == invite_id).first()
+    if not db_invite:
+        return None
+    
+    db_invite.status = status
+    if accepted_at:
+        db_invite.accepted_at = accepted_at
+        
+    db.commit()
+    db.refresh(db_invite)
+    return db_invite
+
+
+def revoke_invite(db: Session, invite_id: UUID) -> bool:
+    """Revogar convite (marcar como revoked)"""
+    return update_invite_status(db, invite_id, "revoked") is not None

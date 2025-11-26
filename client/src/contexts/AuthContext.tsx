@@ -37,7 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (stored) {
       try {
         const session = JSON.parse(stored);
-        const user = getUser(session.userId);
+
+        // Read users directly from localStorage instead of relying on useUsers hook state
+        // This ensures SSO users are recognized immediately
+        const usersStored = localStorage.getItem("zapper_users");
+        const allUsers = usersStored ? JSON.parse(usersStored) : [];
+        const user = allUsers.find((u: User) => u.id === session.userId);
+
         if (user && user.active) {
           const org = user.organizationId ? getOrganization(user.organizationId) : null;
           setAuthState({
