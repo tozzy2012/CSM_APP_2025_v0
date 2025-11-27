@@ -141,6 +141,16 @@ const Dashboard = () => {
 
         {/* Visão Geral */}
         <TabsContent value="overview" className="space-y-6">
+          {/* Header with Filter */}
+          <div className="flex items-center gap-6">
+            <div>
+              <h3 className="text-lg font-semibold">Visão Geral</h3>
+              <p className="text-sm text-muted-foreground">Métricas e pipeline de contas</p>
+            </div>
+            <div className="h-8 w-px bg-gray-200" />
+            <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />
+          </div>
+
           {/* Cards de Estatísticas */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
