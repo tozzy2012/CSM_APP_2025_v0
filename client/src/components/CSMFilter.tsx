@@ -34,7 +34,7 @@ export default function CSMFilter({ selectedCSM, onCSMChange }: CSMFilterProps) 
                 Filtrar por:
             </span>
             <Select value={selectedCSM} onValueChange={onCSMChange}>
-                <SelectTrigger className="w-[400px] h-10 bg-white border-gray-200 hover:border-blue-300 transition-colors shadow-sm">
+                <SelectTrigger className="w-[400px] min-w-[400px] h-10 bg-white border-gray-200 hover:border-blue-300 transition-colors shadow-sm" style={{ width: '400px', minWidth: '400px' }}>
                     <div className="flex items-center gap-2">
                         {selectedCSM === "all" ? (
                             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600">
