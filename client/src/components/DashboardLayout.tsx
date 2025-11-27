@@ -207,9 +207,12 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
     <div className="min-h-screen flex bg-background">
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card flex flex-col">
-        <div className="p-6 border-b border-border">
-          <h1 className="text-2xl font-bold text-foreground">{platformName}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Customer Success Platform</p>
+        <div className="p-6 border-b border-border flex justify-center">
+          <img
+            src="/logo.jpg"
+            alt={platformName}
+            className="h-12 w-auto object-contain"
+          />
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
