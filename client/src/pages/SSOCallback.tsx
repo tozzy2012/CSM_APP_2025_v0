@@ -97,10 +97,14 @@ export default function SSOCallback() {
                     users.push(user);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
                 } else if (user) {
-                    // Update existing user info
+                    // Update existing user info with authoritative data from backend
+                    user.id = response.user.id; // Sync ID from backend
                     user.avatarUrl = response.user.avatar_url;
+                    user.name = response.user.name; // Sync name too
+
                     // Update in list
-                    users = users.map(u => u.id === user!.id ? user! : u);
+                    // We map by email since ID might have changed
+                    users = users.map(u => u.email === user!.email ? user! : u);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
                 }
 
