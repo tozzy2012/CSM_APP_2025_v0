@@ -104,9 +104,9 @@ export default function Login() {
           <div className="flex justify-center mb-4">
             <div className="bg-white p-4 rounded-xl inline-block">
               <img
-                src="/logo.png?v=6"
+                src="/logo.png?v=7"
                 alt="Zapper CS Platform"
-                className="h-48 w-auto object-contain"
+                className="h-96 w-auto object-contain"
               />
             </div>
           </div>
