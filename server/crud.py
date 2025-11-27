@@ -501,6 +501,14 @@ def create_health_score_evaluation(
         pilar_scores=pilar_scores
     )
     db.add(db_evaluation)
+    
+    # Update account health score
+    account = db.query(models.Account).filter(models.Account.id == account_id).first()
+    if account:
+        account.health_score = total_score
+        # Update status based on classification if needed
+        # account.health_status = classification
+        
     db.commit()
     db.refresh(db_evaluation)
     return db_evaluation
