@@ -46,6 +46,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import CSMFilter from "@/components/CSMFilter";
+
 export default function Accounts() {
   const [, setLocation] = useLocation();
   const { currentUser } = useAuth();
@@ -59,6 +61,7 @@ export default function Accounts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
   const [healthFilter, setHealthFilter] = useState("all");
+  const [selectedCSM, setSelectedCSM] = useState<string>("all");
   const [isImportOpen, setIsImportOpen] = useState(false);
 
   // Dialog state
@@ -116,8 +119,10 @@ export default function Accounts() {
       stageFilter === "all" || account.stage === stageFilter;
     const matchesHealth =
       healthFilter === "all" || account.healthStatus === healthFilter;
+    const matchesCSM =
+      selectedCSM === "all" || account.csm === selectedCSM;
 
-    return matchesSearch && matchesStage && matchesHealth;
+    return matchesSearch && matchesStage && matchesHealth && matchesCSM;
   });
 
   // Filtrar clientes para o dropdown
@@ -225,11 +230,15 @@ export default function Accounts() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Accounts</h1>
-            <p className="text-muted-foreground">
-              Gerencie suas contas e clientes
-            </p>
+          <div className="flex items-center gap-6">
+            <div>
+              <h1 className="text-3xl font-bold">Accounts</h1>
+              <p className="text-muted-foreground">
+                Gerencie suas contas e clientes
+              </p>
+            </div>
+            <div className="h-8 w-px bg-gray-200" />
+            <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setIsImportOpen(true)} variant="outline">
