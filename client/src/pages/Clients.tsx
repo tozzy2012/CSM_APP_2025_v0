@@ -121,7 +121,7 @@ export default function Clients() {
       </div>
 
       {/* Main Content */}
-      {/* Main Content */}
+
       <div className="px-8 py-8">
 
         {/* Stats Overview */}
