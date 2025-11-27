@@ -103,9 +103,9 @@ export default function Login() {
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <img
-              src="/logo.png"
+              src="/logo.png?v=3"
               alt="Zapper CS Platform"
-              className="h-16 w-auto object-contain"
+              className="h-48 w-auto object-contain bg-white p-4 rounded-xl"
             />
           </div>
           <CardDescription className="text-center">
