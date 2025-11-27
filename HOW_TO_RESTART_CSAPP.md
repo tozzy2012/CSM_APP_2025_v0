@@ -13,6 +13,16 @@ O projeto é uma aplicação web moderna containerizada via Docker Compose:
 
 Tudo é orquestrado pelo `docker-compose.yml` na raiz.
 
+## 📂 DIRETÓRIO DE TRABALHO
+
+**IMPORTANTE:** Todos os comandos abaixo devem ser executados na raiz do projeto:
+
+```bash
+cd /home/ricardolange/zapper-cs/CSM_APP_2025_v0
+```
+
+Se você estiver em outra pasta, os comandos `docker-compose` não encontrarão o arquivo de configuração e falharão.
+
 ---
 
 ## 🚨 POST-MORTEM: O INCIDENTE DO "DATABASE WIPE"
