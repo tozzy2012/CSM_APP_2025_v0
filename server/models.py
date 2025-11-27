@@ -278,3 +278,30 @@ class Invite(Base):
 
     # Relacionamentos
     inviter = relationship("User", foreign_keys=[invited_by])
+
+
+class NewsItem(Base):
+    """Modelo de Item de Notícia para Radar CS"""
+    __tablename__ = "news_items"
+    
+    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    account_id = Column(String(255), ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
+    
+    # Dados da Notícia
+    title = Column(String(500), nullable=False)
+    summary = Column(Text)
+    content = Column(Text)
+    
+    # Categorização
+    news_type = Column(String(50), nullable=False)  # 'company', 'industry', 'market'
+    category = Column(String(100))  # 'financeiro', 'negocios', 'tecnologia', etc.
+    source_type = Column(String(50), default="openai")  # 'openai', 'rss', 'manual'
+    
+    # Relevância e Metadata
+    relevance_score = Column(Integer, default=50)  # 0-100
+    published_date = Column(DateTime(timezone=True))
+    news_metadata = Column(JSON, default={})  # Dados adicionais (fonte original, urls, etc.)
+    
+    # Metadados
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

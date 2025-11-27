@@ -974,7 +974,115 @@ async def delete_account(
 # #         raise HTTPException(
 # #             status_code=status.HTTP_404_NOT_FOUND,
 # #             detail="Subscription não encontrada"
-# #         )
+# #         )\n\n\n# ============================================================================
+# ROTAS DE NEWS (RADAR CS)
+# ============================================================================
+
+@app.get(
+    f"{settings.API_PREFIX}/news",
+    summary="Listar Notícias",
+    description="Retorna notícias agrupadas por account, com filtro opcional por CSM"
+)
+async def list_news(
+    csm: Optional[str] = Query(None, description="Filtrar por CSM (opcional)"),
+    db: Session = Depends(get_db)
+):
+    """Lista notícias agrupadas por account"""
+    try:
+        from services.news_service import NewsService
+        
+        news_service = NewsService(db)
+        results = news_service.get_news_by_csm(csm)
+        
+        return {
+            "items": results,
+            "total_accounts": len(results),
+            "total_news": sum(r["total_news"] for r in results)
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar notícias: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao listar notícias: {str(e)}"
+        )
+
+
+@app.post(
+    f"{settings.API_PREFIX}/news/refresh/{{account_id}}",
+    summary="Buscar Notícias para Account",
+    description="Busca novas notícias para um account específico usando OpenAI"
+)
+async def refresh_news_for_account(
+    account_id: str,
+    force: bool = Query(False, description="Forçar refresh mesmo com cache válido"),
+    db: Session = Depends(get_db)
+):
+    """Busca novas notícias para um account"""
+    try:
+        from services.news_service import NewsService
+        
+        # Verificar se account existe
+        account = db.query(models.Account).filter(models.Account.id == account_id).first()
+        if not account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Account {account_id} não encontrado"
+            )
+        
+        news_service = NewsService(db)
+        news_items = await news_service.fetch_news_for_account(account_id, force_refresh=force)
+        
+        return {
+            "account_id": account_id,
+            "account_name": account.name,
+            "news_count": len(news_items),
+            "news_items": news_items
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao buscar notícias para account {account_id}: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar notícias: {str(e)}"
+        )
+
+
+@app.post(
+    f"{settings.API_PREFIX}/news/refresh-all",
+    summary="Buscar Notícias para Todos os Accounts",
+    description="Busca notícias para todos os accounts (processo demorado)"
+)
+async def refresh_all_news(
+    csm: Optional[str] = Query(None, description="Filtrar por CSM (opcional)"),
+    db: Session = Depends(get_db)
+):
+    """Busca notícias para todos os accounts"""
+    try:
+        from services.news_service import NewsService
+        
+        news_service = NewsService(db)
+        results = await news_service.fetch_news_for_all_accounts(csm_filter=csm)
+        
+        total_news = sum(len(items) for items in results.values())
+        
+        return {
+            "accounts_processed": len(results),
+            "total_news_fetched": total_news,
+            "results": results
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar notícias para todos os accounts: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar notícias: {str(e)}"
+        )
 
 
 # ============================================================================

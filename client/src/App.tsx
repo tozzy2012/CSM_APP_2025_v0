@@ -23,6 +23,8 @@ import Dashboard from "./pages/Dashboard";
 import AccountDetails from "./pages/AccountDetails";
 import Accounts from "./pages/Accounts";
 import Tasks from "./pages/Tasks";
+import Pendencies from "./pages/Pendencies";
+import RadarCS from "./pages/RadarCS";
 import Activities from "./pages/Activities";
 import Playbooks from "./pages/Playbooks";
 import PlaybookEditor from "./pages/PlaybookEditor";
@@ -107,6 +109,26 @@ function Router() {
           <ProtectedRoute>
             <DashboardLayout>
               <Tasks />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/pendencies"
+        component={() => (
+          <ProtectedRoute>
+            <DashboardLayout>
+              <Pendencies />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/radar-cs"
+        component={() => (
+          <ProtectedRoute>
+            <DashboardLayout>
+              <RadarCS />
             </DashboardLayout>
           </ProtectedRoute>
         )}

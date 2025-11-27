@@ -16,6 +16,8 @@ import {
   Key,
   ChevronDown,
   Mail,
+  AlertCircle,
+  Newspaper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +59,8 @@ const navItems: NavItem[] = [
     children: [
       { path: "/tasks", label: "Tasks", icon: CheckSquare },
       { path: "/activities", label: "Activities", icon: Activity },
+      { path: "/pendencies", label: "Pendências", icon: AlertCircle },
+      { path: "/radar-cs", label: "Radar CS", icon: Newspaper },
     ]
   },
   { path: "/playbooks", label: "Playbooks", icon: BookOpen },
@@ -114,14 +118,15 @@ function NavMenuItem({ item, location }: { item: NavItem; location: string }) {
             {item.children.map((child) => {
               const ChildIcon = child.icon;
               const isChildActive = location === child.path || location.startsWith(child.path + "/");
+              const isPendencies = child.path === "/pendencies";
 
               return (
                 <Link key={child.path} href={child.path}>
                   <a
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${isChildActive
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${isChildActive && !isPendencies
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1"
-                      }`}
+                      } ${isPendencies ? "!text-red-600" : ""}`}
                   >
                     <ChildIcon className="w-4 h-4" />
                     <span className="font-medium text-sm">{child.label}</span>

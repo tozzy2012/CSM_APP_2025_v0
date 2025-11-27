@@ -825,16 +825,32 @@ export default function AccountDetails() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Estágio</span>
-                    <p className="font-medium mt-1 capitalize">{account.stage}</p>
-                  </div>
-                  <div>
                     <span className="text-xs text-muted-foreground uppercase tracking-wider">Status</span>
-                    <p className="font-medium mt-1 capitalize">{account.status}</p>
+                    <div className="mt-1">
+                      <Badge
+                        variant="outline"
+                        className={`font-medium capitalize ${{
+                            "Saudável": "bg-green-100 text-green-700 border-green-200",
+                            "Atenção": "bg-yellow-100 text-yellow-700 border-yellow-200",
+                            "Crítico": "bg-red-100 text-red-700 border-red-200",
+                            "Salvamento": "bg-orange-100 text-orange-700 border-orange-200",
+                            "Upsell": "bg-blue-100 text-blue-700 border-blue-200",
+                            "Churn": "bg-gray-100 text-gray-700 border-gray-200",
+                            "Inadimplente": "bg-purple-100 text-purple-700 border-purple-200",
+                          }[account.status || ""] || "bg-gray-100 text-gray-700 border-gray-200"
+                          }`}
+                      >
+                        {account.status || "-"}
+                      </Badge>
+                    </div>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Funcionários</span>
-                    <p className="font-medium mt-1">{account.employees || "-"}</p>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Última avaliação de HS</span>
+                    <p className="font-medium mt-1">
+                      {healthScoreEvaluation?.evaluationDate
+                        ? new Date(healthScoreEvaluation.evaluationDate).toLocaleDateString('pt-BR')
+                        : "-"}
+                    </p>
                   </div>
                 </div>
               </CardContent>

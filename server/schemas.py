@@ -551,7 +551,62 @@ class InviteResponse(InviteBase):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
+
+
 class InviteList(BaseModel):
     """Lista de convites"""
     items: List[InviteResponse]
     total: int
+
+
+# ============================================================================
+# NEWS ITEM SCHEMAS (RADAR CS)
+# ============================================================================
+
+class NewsItemBase(BaseModel):
+    """Schema base para News Item"""
+    title: str = Field(..., min_length=1, max_length=500)
+    summary: Optional[str] = None
+    content: Optional[str] = None
+    news_type: str = Field(..., alias="newsType")  # company, industry, market
+    category: Optional[str] = None  # financeiro, negocios, tecnologia, etc.
+    relevance_score: int = Field(default=50, ge=0, le=100, alias="relevanceScore")
+    published_date: Optional[datetime] = Field(None, alias="publishedDate")
+    insights: Optional[str] = None  # Business insights from metadata
+    
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class NewsItemCreate(NewsItemBase):
+    """Schema para criação de News Item"""
+    account_id: str = Field(..., alias="accountId")
+
+
+class NewsItemResponse(NewsItemBase):
+    """Schema de resposta para News Item"""
+    id: str
+    account_id: str = Field(..., alias="accountId")
+    source_type: str = Field(..., alias="sourceType")
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
+    
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+
+class AccountNewsResponse(BaseModel):
+    """Schema de resposta para News agrupadas por Account"""
+    account: dict  # Account information
+    news_items: List[NewsItemResponse] = Field(..., alias="newsItems")
+    total_news: int = Field(..., alias="totalNews")
+    
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class NewsListResponse(BaseModel):
+    """Schema de resposta para lista de News"""
+    items: List[AccountNewsResponse]
+    total_accounts: int = Field(..., alias="totalAccounts")
+    total_news: int = Field(..., alias="totalNews")
+    
+    model_config = ConfigDict(populate_by_name=True)
+
