@@ -1,68 +1,71 @@
-# COMO REINICIAR O ZAPPER CS APP DE FORMA SEGURA
+# ZAPPER CS APP - TECHNICAL GUIDE & RESTART PROCEDURES
 
-ESTE GUIA EXPLICA COMO REINICIAR OS SERVIÇOS SEM PERDER DADOS.
+## 🏗️ ARQUITETURA (TL;DR para Devs)
 
-## ⛔ O QUE JAMAIS FAZER
+O projeto é uma aplicação web moderna containerizada via Docker Compose:
 
-**NUNCA** execute o comando:
-❌ `docker-compose down -v`
+- **Frontend**: React + Vite + TypeScript + TailwindCSS + ShadcnUI. Roda na porta `3000`.
+- **Backend**: Python FastAPI + SQLAlchemy + Pydantic. Roda na porta `8000`.
+- **Database**: PostgreSQL com extensão TimescaleDB (para métricas temporais). Persistência via volume Docker `zapper_postgres_data`.
+- **Cache/Queue**: Redis (usado para filas de tarefas e cache).
+- **Auth**: WorkOS para autenticação SSO e gerenciamento de usuários.
+- **Integração**: OpenAI GPT-4 para inteligência de contas.
 
-O flag `-v` significa "volumes", e ele **APAGA PERMANENTEMENTE** todo o banco de dados e arquivos salvos.
+Tudo é orquestrado pelo `docker-compose.yml` na raiz.
 
 ---
 
-## ✅ COMO PARAR OS SERVIÇOS (SAFE STOP)
+## 🚨 POST-MORTEM: O INCIDENTE DO "DATABASE WIPE"
 
-Para parar todos os containers (backend, frontend, banco, redis) de forma segura, mantendo seus dados salvos:
+**O que aconteceu:** Em 27/11/2025, o banco de dados foi apagado acidentalmente.
+**Causa:** Execução do comando `docker-compose down -v`.
+**Lição Aprendida:** O flag `-v` remove os **Named Volumes** (`zapper_postgres_data`), que é onde o Postgres salva os dados. Sem esse volume, o container sobe zerado.
 
+### ⛔ O QUE JAMAIS FAZER
+**NUNCA** execute:
+❌ `docker-compose down -v` (Remove containers E volumes de dados)
+
+---
+
+## ✅ PROCEDIMENTOS DE RESTART (SAFE OPERATIONS)
+
+### 1. Parar Serviços (Mantendo Dados)
 ```bash
 docker-compose down
 ```
+*Remove os containers e redes, mas MANTÉM os volumes de dados.*
 
-Este comando para e remove os containers, mas **PRESERVA** os volumes onde os dados estão guardados.
-
----
-
-## ✅ COMO INICIAR OS SERVIÇOS (SAFE START)
-
-Para subir todos os serviços novamente:
-
+### 2. Iniciar Serviços
 ```bash
 docker-compose up -d
 ```
+*Sobe todo o stack em background.*
 
-O `-d` (detach) libera seu terminal enquanto os serviços rodam em segundo plano.
-
----
-
-## 🔄 CENÁRIOS COMUNS
-
-### 1. Reiniciar apenas um serviço (ex: Backend travou)
-Se você precisa reiniciar apenas um serviço específico sem mexer nos outros:
-
-```bash
-docker-compose restart zapper-backend
-# ou
-docker-compose restart zapper-frontend
-```
-
-### 2. Atualizou código ou instalou bibliotecas (Rebuild)
-Se você alterou o `requirements.txt` ou `package.json` e precisa reconstruir o container:
-
+### 3. Rebuild (Após instalar libs ou alterar Dockerfile)
+Se você alterou `requirements.txt` (backend) ou `package.json` (frontend):
 ```bash
 docker-compose up -d --build
 ```
-Isso recria os containers com as novas alterações, mas **NÃO APAGA O BANCO DE DADOS**.
+*Recria as imagens e containers. Seguro para dados.*
+
+### 4. Reiniciar Serviço Específico
+Se apenas um serviço travou (ex: backend):
+```bash
+docker-compose restart zapper-backend
+```
 
 ---
 
-## 📋 RESUMO DE COMANDOS
+## 🛠️ TROUBLESHOOTING COMUM
 
-| Ação | Comando | Seguro para Dados? |
-|------|---------|-------------------|
-| **Parar tudo** | `docker-compose down` | ✅ **SIM** (Seguro) |
-| **Iniciar tudo** | `docker-compose up -d` | ✅ **SIM** (Seguro) |
-| **Ver logs** | `docker-compose logs -f` | ✅ **SIM** (Seguro) |
-| **Reiniciar um** | `docker-compose restart [servico]` | ✅ **SIM** (Seguro) |
-| **Reconstruir** | `docker-compose up -d --build` | ✅ **SIM** (Seguro) |
-| **APAGAR TUDO** | `docker-compose down -v` | ❌ **PERIGO: APAGA DADOS** |
+**Erro: "No module named 'xyz'" no Backend**
+- **Causa:** Nova dependência adicionada no `requirements.txt` mas o container está rodando com a imagem antiga.
+- **Solução:** `docker-compose up -d --build zapper-backend`
+
+**Erro: Conexão recusada no Frontend (Porta 3000)**
+- **Causa:** O container do frontend pode ter caído ou ainda estar subindo.
+- **Check:** `docker-compose logs -f zapper-frontend`
+
+**Erro: Banco de dados vazio/zerado**
+- **Causa:** Provável execução de `down -v` ou deleção manual do volume.
+- **Recuperação:** Se não houver backup externo, os dados foram perdidos. Será necessário recriar usuários e dados iniciais.
