@@ -102,13 +102,11 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <div className="bg-white p-4 rounded-xl inline-block">
-              <img
-                src="/logo.jpg?v=4"
-                alt="Zapper CS Platform"
-                className="h-48 w-auto object-contain"
-              />
-            </div>
+            <img
+              src="/logo.png?v=5"
+              alt="Zapper CS Platform"
+              className="h-48 w-auto object-contain"
+            />
           </div>
           <CardDescription className="text-center">
             Entre com suas credenciais ou use SSO
