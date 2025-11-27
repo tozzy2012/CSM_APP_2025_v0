@@ -212,7 +212,7 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
             <a className="block hover:opacity-90 transition-opacity">
               <div className="bg-white p-2 rounded-lg inline-block">
                 <img
-                  src="/logo.png?v=3"
+                  src="/logo.jpg?v=4"
                   alt={platformName}
                   className="h-32 w-auto object-contain"
                 />
