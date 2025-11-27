@@ -16,7 +16,7 @@ class TenantBase(BaseModel):
     """Schema base para Tenant"""
     name: str = Field(..., min_length=1, max_length=255)
     subdomain: str = Field(..., min_length=1, max_length=100)
-    plan: str = Field(default="starter", pattern="^(starter|professional|enterprise)$")
+    plan: str = Field(default="starter", pattern="^(free|starter|professional|enterprise)$")
     status: str = Field(default="active", pattern="^(active|suspended|cancelled)$")
     settings: Optional[dict] = {}
 
@@ -29,7 +29,7 @@ class TenantCreate(TenantBase):
 class TenantUpdate(BaseModel):
     """Schema para atualização de Tenant"""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
-    plan: Optional[str] = Field(None, pattern="^(starter|professional|enterprise)$")
+    plan: Optional[str] = Field(None, pattern="^(free|starter|professional|enterprise)$")
     status: Optional[str] = Field(None, pattern="^(active|suspended|cancelled)$")
     settings: Optional[dict] = None
 
