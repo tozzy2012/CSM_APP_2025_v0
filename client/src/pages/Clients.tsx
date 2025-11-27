@@ -87,7 +87,7 @@ export default function Clients() {
     <div className="min-h-screen bg-background pb-20">
       {/* Header Section */}
       <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="px-8 py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">Clientes</h1>
@@ -121,7 +121,8 @@ export default function Clients() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      {/* Main Content */}
+      <div className="px-8 py-8">
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -324,13 +325,15 @@ export default function Clients() {
         }}
       />
 
-      {editingClient && (
-        <EditClientDialog
-          client={editingClient}
-          isOpen={!!editingClient}
-          onClose={() => setEditingClient(null)}
-        />
-      )}
+      {
+        editingClient && (
+          <EditClientDialog
+            client={editingClient}
+            isOpen={!!editingClient}
+            onClose={() => setEditingClient(null)}
+          />
+        )
+      }
 
       <Dialog open={!!deletingClient} onOpenChange={() => setDeletingClient(null)}>
         <DialogContent>
@@ -360,6 +363,6 @@ export default function Clients() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 }
