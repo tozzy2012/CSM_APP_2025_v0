@@ -72,14 +72,11 @@ const Dashboard = () => {
   return (
     <div className="p-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">
-            Visão geral das suas contas e pipeline
-          </p>
-        </div>
-        <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-muted-foreground">
+          Visão geral das suas contas e pipeline
+        </p>
       </div>
 
       {/* Tabs - Redesigned with prominent navigation */}
