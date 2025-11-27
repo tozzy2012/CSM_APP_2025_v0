@@ -82,6 +82,16 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      // Handle 401 Unauthorized - Clear session and redirect to login
+      if (response.status === 401) {
+        console.warn("Unauthorized access - clearing session and redirecting to login");
+        localStorage.removeItem("zapper_session_v2");
+        // Only redirect if we are not already on the login page
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+      }
+
       const error: ApiError = {
         message: response.statusText,
         status: response.status,
