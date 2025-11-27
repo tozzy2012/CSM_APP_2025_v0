@@ -311,11 +311,12 @@ const Dashboard = () => {
 
         {/* Kanban Board */}
         <TabsContent value="kanban" className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
             <div>
               <h3 className="text-lg font-semibold">Kanban Board</h3>
               <p className="text-sm text-muted-foreground">Gerencie suas contas visualmente</p>
             </div>
+            <div className="h-8 w-px bg-gray-200" />
             <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />
           </div>
           <div className="h-[calc(100vh-300px)]">
