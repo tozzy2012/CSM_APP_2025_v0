@@ -100,6 +100,7 @@ class Account(Base):
     type = Column(String(50))
     status = Column(String(50), default="Saudável")
     health_status = Column(String(50))
+    health_score = Column(Integer, default=0)
     
     # Financeiro
     mrr = Column(Numeric(10, 2), default=0)

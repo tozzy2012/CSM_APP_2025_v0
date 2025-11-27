@@ -168,6 +168,7 @@ class AccountBase(BaseModel):
     type: Optional[str] = None
     status: Optional[str] = None
     health_status: Optional[str] = Field(None, alias="healthStatus")
+    health_score: int = Field(default=0, alias="healthScore")
     mrr: float = Field(default=0.0)
     contract_start: Optional[date] = Field(None, alias="contractStart")
     contract_end: Optional[date] = Field(None, alias="contractEnd")
@@ -190,6 +191,7 @@ class AccountUpdate(BaseModel):
     type: Optional[str] = None
     status: Optional[str] = None
     health_status: Optional[str] = Field(None, alias="healthStatus")
+    health_score: Optional[int] = Field(None, alias="healthScore")
     mrr: Optional[float] = None
     contract_start: Optional[date] = Field(None, alias="contractStart")
     contract_end: Optional[date] = Field(None, alias="contractEnd")
