@@ -80,8 +80,16 @@ async def update_tenant(
             
         # Update fields
         update_data = tenant_update.model_dump(exclude_unset=True)
+        logger.info(f"Updating tenant {tenant_id} with data: {update_data}")
+        
         for field, value in update_data.items():
             setattr(db_tenant, field, value)
+            
+        # Force flag modified for JSON field if it exists in update
+        if 'settings' in update_data:
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(db_tenant, "settings")
+            logger.info(f"Settings updated to: {update_data['settings']}")
             
         db.commit()
         db.refresh(db_tenant)
