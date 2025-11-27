@@ -65,7 +65,10 @@ async def analyze_account_with_ai(
         }
         
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        error_msg = str(e)
+        if "not found" in error_msg.lower():
+            raise HTTPException(status_code=404, detail=error_msg)
+        raise HTTPException(status_code=400, detail=error_msg)
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
