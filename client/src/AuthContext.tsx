@@ -1,6 +1,6 @@
  * AuthContext
- * Gerencia autenticação e sessão do usuário
- */
+  * Gerencia autenticação e sessão do usuário
+    */
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import type { User, Organization, AuthState } from "@/types/auth";
 import { useUsers } from "@/hooks/useUsers";
@@ -14,12 +14,12 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SESSION_KEY = "zapper_session";
+const SESSION_KEY = "zapper_session_v2";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { authenticate, getUser, updateUser } = useUsers();
   const { getOrganization } = useOrganizations();
-  
+
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     currentUser: null,

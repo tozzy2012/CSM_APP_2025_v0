@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { useClientsContext, PowerMapContact, ClientContact, Client } from "@/contexts/ClientsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +22,9 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Building2,
   MapPin,
@@ -32,6 +36,10 @@ import {
   TrendingUp,
   Minus,
   X,
+  Save,
+  Briefcase,
+  Mail,
+  Globe
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -220,531 +228,327 @@ export default function EditClientDialog({ client, isOpen, onClose }: EditClient
 
   const getInfluenceIcon = (influence: string) => {
     switch (influence) {
-      case "champion":
-        return <Star className="h-4 w-4 text-green-600" />;
-      case "influencer":
-        return <TrendingUp className="h-4 w-4 text-blue-600" />;
-      case "neutral":
-        return <Minus className="h-4 w-4 text-gray-600" />;
-      case "blocker":
-        return <X className="h-4 w-4 text-red-600" />;
-      default:
-        return null;
+      case "champion": return <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />;
+      case "influencer": return <TrendingUp className="h-3 w-3 text-blue-500" />;
+      case "blocker": return <X className="h-3 w-3 text-red-500" />;
+      default: return <Minus className="h-3 w-3 text-gray-400" />;
     }
   };
 
-  const getInfluenceLabel = (influence: string) => {
-    const labels: Record<string, string> = {
-      champion: "Campeão",
-      influencer: "Influenciador",
-      neutral: "Neutro",
-      blocker: "Bloqueador",
-    };
-    return labels[influence] || influence;
-  };
-
-  const getContactTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      phone: "Telefone",
-      whatsapp: "WhatsApp",
-      email: "E-mail",
-      other: "Outro",
-    };
-    return labels[type] || type;
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Editar Cliente</DialogTitle>
-        </DialogHeader>
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className="w-[900px] sm:max-w-[900px] p-0 flex flex-col bg-background">
+        <SheetHeader className="px-6 py-4 border-b">
+          <SheetTitle className="text-xl flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-primary" />
+            Editar Cliente
+          </SheetTitle>
+          <SheetDescription>
+            Atualize as informações de {client.name}
+          </SheetDescription>
+        </SheetHeader>
 
-        <Tabs defaultValue="company" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="company">
-              <Building2 className="h-4 w-4 mr-2" />
-              Empresa
-            </TabsTrigger>
-            <TabsTrigger value="address">
-              <MapPin className="h-4 w-4 mr-2" />
-              Endereço
-            </TabsTrigger>
-            <TabsTrigger value="powermap">
-              <Users className="h-4 w-4 mr-2" />
-              Mapa de Poder
-            </TabsTrigger>
-            <TabsTrigger value="contacts">
-              <Phone className="h-4 w-4 mr-2" />
-              Contatos
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Aba: Empresa */}
-          <TabsContent value="company" className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">
-                  Nome Fantasia <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ex: Acme Corp"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="legalName">
-                  Razão Social <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="legalName"
-                  value={legalName}
-                  onChange={(e) => setLegalName(e.target.value)}
-                  placeholder="Ex: Acme Corporation LTDA"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cnpj">
-                  CNPJ <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="cnpj"
-                  value={cnpj}
-                  onChange={(e) => setCnpj(e.target.value)}
-                  placeholder="00.000.000/0000-00"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="industry">Setor</Label>
-                <Input
-                  id="industry"
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                  placeholder="Ex: Tecnologia"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
-                <Input
-                  id="website"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  placeholder="https://exemplo.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="companySize">Tamanho da Empresa</Label>
-                <Select value={companySize} onValueChange={setCompanySize}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1-10">1-10 funcionários</SelectItem>
-                    <SelectItem value="11-50">11-50 funcionários</SelectItem>
-                    <SelectItem value="51-200">51-200 funcionários</SelectItem>
-                    <SelectItem value="201-500">201-500 funcionários</SelectItem>
-                    <SelectItem value="501-1000">501-1000 funcionários</SelectItem>
-                    <SelectItem value="1000+">1000+ funcionários</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="revenue">Faturamento Anual</Label>
-                <Input
-                  id="revenue"
-                  value={revenue}
-                  onChange={(e) => setRevenue(e.target.value)}
-                  placeholder="Ex: R$ 10M"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="foundedYear">Ano de Fundação</Label>
-                <Input
-                  id="foundedYear"
-                  type="number"
-                  value={foundedYear}
-                  onChange={(e) => setFoundedYear(parseInt(e.target.value))}
-                  placeholder="2020"
-                />
-              </div>
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <Tabs defaultValue="company" className="flex-1 flex flex-col overflow-hidden">
+            <div className="px-6 pt-4 border-b bg-muted/30">
+              <TabsList className="grid w-full grid-cols-4 bg-transparent p-0 h-auto gap-4">
+                <TabsTrigger
+                  value="company"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+                >
+                  Empresa
+                </TabsTrigger>
+                <TabsTrigger
+                  value="address"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+                >
+                  Endereço
+                </TabsTrigger>
+                <TabsTrigger
+                  value="powermap"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+                >
+                  Mapa de Poder
+                </TabsTrigger>
+                <TabsTrigger
+                  value="contacts"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+                >
+                  Contatos
+                </TabsTrigger>
+              </TabsList>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Observações</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Informações adicionais sobre o cliente..."
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Tags</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="Adicionar tag..."
-                  onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
-                />
-                <Button type="button" onClick={handleAddTag} variant="outline">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                      <button
-                        onClick={() => handleRemoveTag(tag)}
-                        className="ml-2 hover:text-red-600"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Aba: Endereço */}
-          <TabsContent value="address" className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">CEP</Label>
-                <Input
-                  id="zipCode"
-                  value={address.zipCode}
-                  onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
-                  placeholder="00000-000"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="street">Rua</Label>
-                <Input
-                  id="street"
-                  value={address.street}
-                  onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                  placeholder="Nome da rua"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="number">Número</Label>
-                <Input
-                  id="number"
-                  value={address.number}
-                  onChange={(e) => setAddress({ ...address, number: e.target.value })}
-                  placeholder="123"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="complement">Complemento</Label>
-                <Input
-                  id="complement"
-                  value={address.complement}
-                  onChange={(e) => setAddress({ ...address, complement: e.target.value })}
-                  placeholder="Sala, andar, etc."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="neighborhood">Bairro</Label>
-                <Input
-                  id="neighborhood"
-                  value={address.neighborhood}
-                  onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
-                  placeholder="Nome do bairro"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="city">Cidade</Label>
-                <Input
-                  id="city"
-                  value={address.city}
-                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                  placeholder="São Paulo"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="state">Estado</Label>
-                <Input
-                  id="state"
-                  value={address.state}
-                  onChange={(e) => setAddress({ ...address, state: e.target.value })}
-                  placeholder="SP"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="country">País</Label>
-                <Input
-                  id="country"
-                  value={address.country}
-                  onChange={(e) => setAddress({ ...address, country: e.target.value })}
-                  placeholder="Brasil"
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Aba: Mapa de Poder */}
-          <TabsContent value="powermap" className="space-y-4 mt-4">
-            <Card className="p-4 bg-blue-50 border-blue-200">
-              <p className="text-sm text-blue-900">
-                <strong>Mapa de Poder:</strong> Cadastre os principais stakeholders e tomadores de decisão da empresa.
-              </p>
-            </Card>
-
-            {/* Formulário de Novo Stakeholder */}
-            <Card className="p-4">
-              <h3 className="font-semibold mb-3">Adicionar Stakeholder</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Nome *</Label>
-                  <Input
-                    value={newStakeholder.name}
-                    onChange={(e) => setNewStakeholder({ ...newStakeholder, name: e.target.value })}
-                    placeholder="Nome completo"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Cargo *</Label>
-                  <Input
-                    value={newStakeholder.role}
-                    onChange={(e) => setNewStakeholder({ ...newStakeholder, role: e.target.value })}
-                    placeholder="CEO, CTO, etc."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Departamento</Label>
-                  <Input
-                    value={newStakeholder.department}
-                    onChange={(e) => setNewStakeholder({ ...newStakeholder, department: e.target.value })}
-                    placeholder="TI, Comercial, etc."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Nível de Influência</Label>
-                  <Select
-                    value={newStakeholder.influence}
-                    onValueChange={(value: any) => setNewStakeholder({ ...newStakeholder, influence: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="champion">Campeão</SelectItem>
-                      <SelectItem value="influencer">Influenciador</SelectItem>
-                      <SelectItem value="neutral">Neutro</SelectItem>
-                      <SelectItem value="blocker">Bloqueador</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>E-mail</Label>
-                  <Input
-                    type="email"
-                    value={newStakeholder.email}
-                    onChange={(e) => setNewStakeholder({ ...newStakeholder, email: e.target.value })}
-                    placeholder="email@empresa.com"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Telefone</Label>
-                  <Input
-                    value={newStakeholder.phone}
-                    onChange={(e) => setNewStakeholder({ ...newStakeholder, phone: e.target.value })}
-                    placeholder="(11) 99999-9999"
-                  />
-                </div>
-
-                <div className="space-y-2 col-span-2">
-                  <Label>Observações</Label>
-                  <Textarea
-                    value={newStakeholder.notes}
-                    onChange={(e) => setNewStakeholder({ ...newStakeholder, notes: e.target.value })}
-                    placeholder="Notas sobre este stakeholder..."
-                    rows={2}
-                  />
-                </div>
-              </div>
-
-              <Button type="button" onClick={handleAddStakeholder} className="mt-3">
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Stakeholder
-              </Button>
-            </Card>
-
-            {/* Lista de Stakeholders */}
-            {powerMap.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-semibold">Stakeholders Cadastrados ({powerMap.length})</h3>
-                {powerMap.map((stakeholder) => (
-                  <Card key={stakeholder.id} className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-semibold">{stakeholder.name}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            {getInfluenceIcon(stakeholder.influence)}
-                            <span className="ml-1">{getInfluenceLabel(stakeholder.influence)}</span>
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <p><strong>Cargo:</strong> {stakeholder.role}</p>
-                          {stakeholder.department && <p><strong>Departamento:</strong> {stakeholder.department}</p>}
-                          {stakeholder.email && <p><strong>E-mail:</strong> {stakeholder.email}</p>}
-                          {stakeholder.phone && <p><strong>Telefone:</strong> {stakeholder.phone}</p>}
-                          {stakeholder.notes && <p><strong>Observações:</strong> {stakeholder.notes}</p>}
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveStakeholder(stakeholder.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
+            <ScrollArea className="flex-1 p-6">
+              {/* Aba: Empresa */}
+              <TabsContent value="company" className="space-y-6 mt-0">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome Fantasia <span className="text-red-500">*</span></Label>
+                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Acme Corp" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="legalName">Razão Social <span className="text-red-500">*</span></Label>
+                    <Input id="legalName" value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="Ex: Acme Corporation LTDA" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cnpj">CNPJ <span className="text-red-500">*</span></Label>
+                    <Input id="cnpj" value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="industry">Setor</Label>
+                    <Input id="industry" value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Ex: Tecnologia" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <div className="relative">
+                      <Globe className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input className="pl-9" id="website" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://exemplo.com" />
                     </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companySize">Tamanho</Label>
+                    <Select value={companySize} onValueChange={setCompanySize}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1-10">1-10 func.</SelectItem>
+                        <SelectItem value="11-50">11-50 func.</SelectItem>
+                        <SelectItem value="51-200">51-200 func.</SelectItem>
+                        <SelectItem value="201-500">201-500 func.</SelectItem>
+                        <SelectItem value="501-1000">501-1k func.</SelectItem>
+                        <SelectItem value="1000+">1k+ func.</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="revenue">Faturamento Anual</Label>
+                    <Input id="revenue" value={revenue} onChange={(e) => setRevenue(e.target.value)} placeholder="Ex: R$ 10M" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="foundedYear">Ano de Fundação</Label>
+                    <Input id="foundedYear" type="number" value={foundedYear} onChange={(e) => setFoundedYear(parseInt(e.target.value))} placeholder="2020" />
+                  </div>
+                </div>
 
-          {/* Aba: Contatos */}
-          <TabsContent value="contacts" className="space-y-4 mt-4">
-            <Card className="p-4 bg-green-50 border-green-200">
-              <p className="text-sm text-green-900">
-                <strong>Contatos:</strong> Cadastre telefones, WhatsApp, e-mails e outros meios de contato.
-              </p>
-            </Card>
+                <Separator />
 
-            {/* Formulário de Novo Contato */}
-            <Card className="p-4">
-              <h3 className="font-semibold mb-3">Adicionar Contato</h3>
-              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Tipo</Label>
-                  <Select
-                    value={newContact.type}
-                    onValueChange={(value: any) => setNewContact({ ...newContact, type: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="phone">Telefone</SelectItem>
-                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                      <SelectItem value="email">E-mail</SelectItem>
-                      <SelectItem value="other">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="notes">Observações</Label>
+                  <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Informações adicionais..." rows={3} />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Valor *</Label>
-                  <Input
-                    value={newContact.value}
-                    onChange={(e) => setNewContact({ ...newContact, value: e.target.value })}
-                    placeholder="(11) 99999-9999 ou email@empresa.com"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Descrição</Label>
-                  <Input
-                    value={newContact.label}
-                    onChange={(e) => setNewContact({ ...newContact, label: e.target.value })}
-                    placeholder="Ex: Telefone Comercial, WhatsApp CEO"
-                  />
-                </div>
-
-                <div className="space-y-2 flex items-end">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={newContact.isPrimary}
-                      onChange={(e) => setNewContact({ ...newContact, isPrimary: e.target.checked })}
-                      className="w-4 h-4"
+                  <Label>Tags</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Nova tag..."
+                      onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
+                      className="max-w-[200px]"
                     />
-                    <span className="text-sm">Contato Principal</span>
-                  </label>
+                    <Button type="button" onClick={handleAddTag} variant="outline" size="icon">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="pl-2 pr-1 py-1">
+                        {tag}
+                        <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive p-0.5 rounded-full hover:bg-destructive/10">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </TabsContent>
 
-              <Button type="button" onClick={handleAddContact} className="mt-3">
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Contato
-              </Button>
-            </Card>
+              {/* Aba: Endereço */}
+              <TabsContent value="address" className="space-y-6 mt-0">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="zipCode">CEP</Label>
+                    <Input id="zipCode" value={address.zipCode} onChange={(e) => setAddress({ ...address, zipCode: e.target.value })} placeholder="00000-000" className="max-w-[200px]" />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="street">Rua</Label>
+                    <Input id="street" value={address.street} onChange={(e) => setAddress({ ...address, street: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="number">Número</Label>
+                    <Input id="number" value={address.number} onChange={(e) => setAddress({ ...address, number: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="complement">Complemento</Label>
+                    <Input id="complement" value={address.complement} onChange={(e) => setAddress({ ...address, complement: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="neighborhood">Bairro</Label>
+                    <Input id="neighborhood" value={address.neighborhood} onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">Cidade</Label>
+                    <Input id="city" value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="state">Estado</Label>
+                    <Input id="state" value={address.state} onChange={(e) => setAddress({ ...address, state: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country">País</Label>
+                    <Input id="country" value={address.country} onChange={(e) => setAddress({ ...address, country: e.target.value })} />
+                  </div>
+                </div>
+              </TabsContent>
 
-            {/* Lista de Contatos */}
-            {contacts.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-semibold">Contatos Cadastrados ({contacts.length})</h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {contacts.map((contact) => (
-                    <Card key={contact.id} className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline">{getContactTypeLabel(contact.type)}</Badge>
-                          <div>
-                            <p className="font-medium">{contact.value}</p>
-                            {contact.label && <p className="text-sm text-gray-600">{contact.label}</p>}
-                          </div>
-                          {contact.isPrimary && (
-                            <Badge variant="default" className="text-xs">Principal</Badge>
-                          )}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveContact(contact.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
+              {/* Aba: Mapa de Poder */}
+              <TabsContent value="powermap" className="space-y-6 mt-0">
+                <div className="grid grid-cols-3 gap-6">
+                  {/* Form */}
+                  <div className="col-span-1 space-y-4 border-r pr-6">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Novo Stakeholder</h4>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Nome</Label>
+                        <Input value={newStakeholder.name} onChange={(e) => setNewStakeholder({ ...newStakeholder, name: e.target.value })} className="h-8" />
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Cargo</Label>
+                        <Input value={newStakeholder.role} onChange={(e) => setNewStakeholder({ ...newStakeholder, role: e.target.value })} className="h-8" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Influência</Label>
+                        <Select value={newStakeholder.influence} onValueChange={(value: any) => setNewStakeholder({ ...newStakeholder, influence: value })}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="champion">Campeão</SelectItem>
+                            <SelectItem value="influencer">Influenciador</SelectItem>
+                            <SelectItem value="neutral">Neutro</SelectItem>
+                            <SelectItem value="blocker">Bloqueador</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Email</Label>
+                        <Input value={newStakeholder.email} onChange={(e) => setNewStakeholder({ ...newStakeholder, email: e.target.value })} className="h-8" />
+                      </div>
+                      <Button onClick={handleAddStakeholder} size="sm" className="w-full mt-2">Adicionar</Button>
+                    </div>
+                  </div>
 
-        <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit}>Salvar Alterações</Button>
+                  {/* List */}
+                  <div className="col-span-2 space-y-3">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Stakeholders ({powerMap.length})</h4>
+                    {powerMap.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                        <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Nenhum stakeholder</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {powerMap.map((stakeholder) => (
+                          <div key={stakeholder.id} className="flex items-start justify-between p-3 rounded-lg border bg-card hover:shadow-sm transition-all">
+                            <div className="flex items-start gap-3">
+                              <div className="mt-1">
+                                {getInfluenceIcon(stakeholder.influence)}
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{stakeholder.name}</p>
+                                <p className="text-xs text-muted-foreground">{stakeholder.role}</p>
+                                {stakeholder.email && <p className="text-xs text-muted-foreground mt-0.5">{stakeholder.email}</p>}
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveStakeholder(stakeholder.id)}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Aba: Contatos */}
+              <TabsContent value="contacts" className="space-y-6 mt-0">
+                <div className="grid grid-cols-3 gap-6">
+                  {/* Form */}
+                  <div className="col-span-1 space-y-4 border-r pr-6">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Novo Contato</h4>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Tipo</Label>
+                        <Select value={newContact.type} onValueChange={(value: any) => setNewContact({ ...newContact, type: value })}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="phone">Telefone</SelectItem>
+                            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                            <SelectItem value="email">E-mail</SelectItem>
+                            <SelectItem value="other">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Valor</Label>
+                        <Input value={newContact.value} onChange={(e) => setNewContact({ ...newContact, value: e.target.value })} className="h-8" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Descrição</Label>
+                        <Input value={newContact.label} onChange={(e) => setNewContact({ ...newContact, label: e.target.value })} className="h-8" placeholder="Ex: Comercial" />
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <input type="checkbox" checked={newContact.isPrimary} onChange={(e) => setNewContact({ ...newContact, isPrimary: e.target.checked })} id="isPrimary" className="rounded border-gray-300" />
+                        <Label htmlFor="isPrimary" className="text-xs cursor-pointer">Principal</Label>
+                      </div>
+                      <Button onClick={handleAddContact} size="sm" className="w-full mt-2">Adicionar</Button>
+                    </div>
+                  </div>
+
+                  {/* List */}
+                  <div className="col-span-2 space-y-3">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Contatos ({contacts.length})</h4>
+                    {contacts.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                        <Phone className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Nenhum contato</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {contacts.map((contact) => (
+                          <div key={contact.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:shadow-sm transition-all">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="capitalize">{contact.type}</Badge>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-sm">{contact.value}</p>
+                                  {contact.isPrimary && <Badge variant="default" className="text-[10px] h-4 px-1">Principal</Badge>}
+                                </div>
+                                {contact.label && <p className="text-xs text-muted-foreground">{contact.label}</p>}
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveContact(contact.id)}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        <SheetFooter className="px-6 py-4 border-t bg-muted/30">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSubmit}>
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Alterações
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -17,7 +17,7 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SESSION_KEY = "zapper_session";
+const SESSION_KEY = "zapper_session_v2";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { authenticate, getUser, updateUser } = useUsers();

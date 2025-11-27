@@ -55,31 +55,50 @@ export default function AddActivityDialog({
     accountId: accountId || "",
   });
 
-  const handleSubmit = async () => {
-    console.log("handleSubmit iniciado");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e?: React.MouseEvent) => {
+    console.log("[AddActivityDialog] handleSubmit chamado", { formData });
+
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     try {
+      setLoading(true);
+      console.log("[AddActivityDialog] Loading set to true");
+
       if (!formData.title) {
+        console.log("[AddActivityDialog] Validation failed: title missing");
         toast.error("Título é obrigatório");
+        setLoading(false);
         return;
       }
 
       if (!formData.dueDate) {
+        console.log("[AddActivityDialog] Validation failed: dueDate missing");
         toast.error("Data de vencimento é obrigatória");
+        setLoading(false);
         return;
       }
 
       if (!formData.accountId) {
+        console.log("[AddActivityDialog] Validation failed: accountId missing");
         toast.error("Cliente é obrigatório");
+        setLoading(false);
         return;
       }
 
+      console.log("[AddActivityDialog] Validation passed, calling createActivity");
       await createActivity({
         ...formData,
         accountId: formData.accountId,
         createdBy: formData.assignee,
       });
 
-      // toast.success("Atividade criada com sucesso!");
+      console.log("[AddActivityDialog] Activity created successfully");
+      toast.success("Atividade criada com sucesso!");
       onOpenChange(false);
 
       // Reset form
@@ -94,8 +113,11 @@ export default function AddActivityDialog({
         accountId: accountId || "",
       });
     } catch (error) {
-      console.error("Erro ao criar atividade:", error);
+      console.error("[AddActivityDialog] Erro ao criar atividade:", error);
       toast.error("Erro ao criar atividade. Tente novamente.");
+    } finally {
+      console.log("[AddActivityDialog] Setting loading to false");
+      setLoading(false);
     }
   };
 
@@ -275,10 +297,12 @@ export default function AddActivityDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancelar
           </Button>
-          <Button type="button" onClick={handleSubmit}>Criar Atividade</Button>
+          <Button type="button" onClick={handleSubmit} disabled={loading}>
+            {loading ? "Criando..." : "Criar Atividade"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

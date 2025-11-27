@@ -143,6 +143,34 @@ Mantenha um tom profissional, consultivo e direto."""
             for t in tasks.get("overdue_details", [])[:3]
         ]) if tasks.get("overdue", 0) > 0 else "  Sem tarefas atrasadas"
         
+        # Format Kickoff Data
+        kickoff = context.get("kickoff", {})
+        spiced = kickoff.get("spiced", {})
+        negotiation = kickoff.get("negotiation", {})
+        expectations = kickoff.get("expectations", {})
+        
+        kickoff_str = f"""
+### Kick Off Interno & SPICED
+- Vendedor: {kickoff.get('sales_rep', 'N/A')}
+- Origem: {kickoff.get('origin', 'N/A')} {f"({kickoff.get('origin_other')})" if kickoff.get('origin') == 'outro' else ''}
+- Champion Identificado: {kickoff.get('champion', 'N/A')}
+
+#### SPICED Framework:
+- Situation: {spiced.get('situation', 'N/A')}
+- Pain: {spiced.get('pain', 'N/A')}
+- Impact: {spiced.get('impact', 'N/A')}
+- Critical Event: {spiced.get('critical_event', 'N/A')}
+- Decision: {spiced.get('decision', 'N/A')}
+
+#### Negociação e Expectativas:
+- Negociado com: {negotiation.get('negotiated_with', 'N/A')}
+- Detalhes: {negotiation.get('details', 'N/A')}
+- Promessas: {negotiation.get('promises', 'N/A')}
+- Expectativas: {expectations.get('outcomes', 'N/A')}
+- Critérios de Sucesso: {expectations.get('success_criteria', 'N/A')}
+- Riscos/Red Flags: {kickoff.get('risks', 'N/A')}
+"""
+
         prompt = f"""Analise profundamente este cliente B2B SaaS:
 
 ## DADOS DO CLIENTE
@@ -150,15 +178,15 @@ Mantenha um tom profissional, consultivo e direto."""
 ### Informações Básicas
 - Nome: {account.get('name', 'N/A')}
 - Indústria: {account.get('industry', 'N/A')}
-- Estágio: {account.get('stage', 'N/A')}
-- Status: {account.get('status', 'N/A')}
+- Tipo: {account.get('type', 'N/A')}
+- Status de Saúde: {account.get('health_status', 'N/A')}
 - CSM Responsável: {account.get('csm', 'N/A')}
-- Funcionários: {account.get('employees', 'N/A')}
+
+{kickoff_str}
 
 ### Financeiro
 - MRR Atual: R$ {financial.get('current_mrr', 0):,.2f}
 - ARR: R$ {financial.get('arr', 0):,.2f}
-- Valor do Contrato: R$ {financial.get('contract_value', 0):,.2f}
 - Início do Contrato: {financial.get('contract_start', 'N/A')}
 - Fim do Contrato: {financial.get('contract_end', 'N/A')}
 - Dias até Renovação: {financial.get('days_to_renewal', 'N/A')}

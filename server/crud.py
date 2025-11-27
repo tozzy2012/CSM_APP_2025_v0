@@ -607,3 +607,29 @@ def update_invite_status(
 def revoke_invite(db: Session, invite_id: UUID) -> bool:
     """Revogar convite (marcar como revoked)"""
     return update_invite_status(db, invite_id, "revoked") is not None
+
+
+def delete_invite(db: Session, invite_id: UUID) -> bool:
+    """Deletar convite permanentemente"""
+    db_invite = db.query(models.Invite).filter(models.Invite.id == invite_id).first()
+    if not db_invite:
+        return False
+    
+    db.delete(db_invite)
+    db.commit()
+    return True
+
+
+def update_invite(db: Session, invite_id: UUID, invite_data: schemas.InviteUpdate) -> Optional[models.Invite]:
+    """Atualizar dados do convite"""
+    db_invite = db.query(models.Invite).filter(models.Invite.id == invite_id).first()
+    if not db_invite:
+        return None
+    
+    update_data = invite_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_invite, field, value)
+        
+    db.commit()
+    db.refresh(db_invite)
+    return db_invite

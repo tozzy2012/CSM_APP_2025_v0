@@ -18,6 +18,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import InviteForm from "@/components/InviteForm";
+import InviteList from "@/components/InviteList";
+import {
   Settings as SettingsIcon,
   Bell,
   Zap,
@@ -30,8 +37,10 @@ import {
   Building2,
   Activity,
   CheckSquare,
+  Mail,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
-import TeamManagement from "@/components/TeamManagement";
 import TagsManagement from "@/components/TagsManagement";
 import StatusManagement from "@/components/StatusManagement";
 import HealthScoreSettings from "@/components/HealthScoreSettings";
@@ -53,9 +62,14 @@ type SettingsSection =
   | "ai";
 
 export default function Settings() {
-  const { currentOrganization } = useAuth();
+  const { currentOrganization, user, logout } = useAuth();
   const { updateOrganization } = useOrganizations();
   const [activeSection, setActiveSection] = useState<SettingsSection>("general");
+
+  // Team Management State
+  const [inviteFormOpen, setInviteFormOpen] = useState(false);
+  const [inviteListOpen, setInviteListOpen] = useState(false);
+  const [refreshInvites, setRefreshInvites] = useState(0);
 
   // General Settings
   const [companyName, setCompanyName] = useState(() => {
@@ -429,11 +443,56 @@ export default function Settings() {
                 <div>
                   <h2 className="text-2xl font-bold">Gerenciamento de Equipe</h2>
                   <p className="text-muted-foreground mt-1">
-                    Gerencie CSMs e times da sua organização
+                    Gerencie convites e acesso à plataforma
                   </p>
                 </div>
                 <Separator />
-                <TeamManagement />
+
+                <div className="space-y-4">
+                  {/* Accordion 1: Enviar Novo Convite */}
+                  <Collapsible
+                    open={inviteFormOpen}
+                    onOpenChange={setInviteFormOpen}
+                    className="border rounded-md"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <Mail className="w-5 h-5" />
+                          Enviar Novo Convite
+                        </h3>
+                        {inviteFormOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="p-4 pt-0">
+                        <InviteForm onSuccess={() => setRefreshInvites(prev => prev + 1)} />
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  {/* Accordion 2: Gerenciar Convites */}
+                  <Collapsible
+                    open={inviteListOpen}
+                    onOpenChange={setInviteListOpen}
+                    className="border rounded-md"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <Users className="w-5 h-5" />
+                          Gerenciar Convites e Usuários
+                        </h3>
+                        {inviteListOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="p-4 pt-0">
+                        <InviteList refreshTrigger={refreshInvites} />
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
               </div>
             </Card>
           )}

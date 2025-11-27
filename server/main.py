@@ -272,6 +272,49 @@ async def revoke_invite(
     return None
 
 
+@app.delete(
+    f"{settings.API_PREFIX}/invites/{{invite_id}}/permanent",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Excluir Convite Permanentemente",
+    description="Exclui um convite do banco de dados permanentemente"
+)
+async def delete_invite_permanent(
+    invite_id: UUID,
+    # current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Exclui convite permanentemente"""
+    success = crud.delete_invite(db, invite_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Convite não encontrado"
+        )
+    return None
+
+
+@app.patch(
+    f"{settings.API_PREFIX}/invites/{{invite_id}}",
+    response_model=schemas.InviteResponse,
+    summary="Atualizar Convite",
+    description="Atualiza dados de um convite (ex: role)"
+)
+async def update_invite(
+    invite_id: UUID,
+    invite_data: schemas.InviteUpdate,
+    # current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Atualiza convite"""
+    invite = crud.update_invite(db, invite_id, invite_data)
+    if not invite:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Convite não encontrado"
+        )
+    return invite
+
+
 @app.get(
     f"{settings.API_PREFIX}/invites/validate/{{token}}",
     response_model=schemas.InviteResponse,

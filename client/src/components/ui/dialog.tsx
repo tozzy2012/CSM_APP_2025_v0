@@ -22,7 +22,7 @@ export function Dialog({ open = false, onOpenChange, children }: DialogProps) {
 
 export function DialogContent({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("relative z-50 bg-white rounded-lg shadow-lg p-6 min-w-[320px] max-w-md", className)}>
+    <div className={cn("relative z-50 bg-white rounded-lg shadow-lg p-6 min-w-[320px]", className)}>
       {children}
     </div>
   );

@@ -70,13 +70,8 @@ class Client(Base):
     industry = Column(String(255))
     website = Column(String(500))
     
-    # Endereço (JSON)
-    address = Column(JSON)
-    
     # Informações Comerciais
     company_size = Column(String(50))
-    revenue = Column(String(100))
-    founded_year = Column(Integer)
     
     # Mapa de Poder e Contatos (JSON)
     power_map = Column(JSON, default=[])
@@ -102,22 +97,21 @@ class Account(Base):
     # Dados do Account
     name = Column(String(255), nullable=False)
     industry = Column(String(255))
-    stage = Column(String(50))
     type = Column(String(50))
-    status = Column(String(100))
+    status = Column(String(50), default="Saudável")
     health_status = Column(String(50))
-    health_score = Column(Integer, default=75)
     
     # Financeiro
     mrr = Column(Numeric(10, 2), default=0)
-    contract_value = Column(Numeric(10, 2), default=0)
     contract_start = Column(Date)
     contract_end = Column(Date)
     
     # CS
     csm = Column(String(255))
-    employees = Column(Integer, default=0)
     website = Column(String(500))
+    
+    # Internal Kickoff - Sales to CS handoff information
+    internal_kickoff = Column(JSON, default={})
     
     # Metadados
     created_at = Column(DateTime(timezone=True), server_default=func.now())

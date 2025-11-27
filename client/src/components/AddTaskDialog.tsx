@@ -54,29 +54,49 @@ export default function AddTaskDialog({
     accountId: accountId || "",
   });
 
-  const handleSubmit = async () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e?: React.MouseEvent) => {
+    console.log("[AddTaskDialog] handleSubmit chamado", { formData });
+
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     try {
+      setLoading(true);
+      console.log("[AddTaskDialog] Loading set to true");
+
       if (!formData.title) {
+        console.log("[AddTaskDialog] Validation failed: title missing");
         toast.error("Título é obrigatório");
+        setLoading(false);
         return;
       }
 
       if (!formData.dueDate) {
+        console.log("[AddTaskDialog] Validation failed: dueDate missing");
         toast.error("Data de vencimento é obrigatória");
+        setLoading(false);
         return;
       }
 
       if (!formData.accountId) {
+        console.log("[AddTaskDialog] Validation failed: accountId missing");
         toast.error("Cliente é obrigatório");
+        setLoading(false);
         return;
       }
 
+      console.log("[AddTaskDialog] Validation passed, calling createTask");
       await createTask({
         ...formData,
         accountId: formData.accountId,
         createdBy: formData.assignee,
       });
 
+      console.log("[AddTaskDialog] Task created successfully");
       toast.success("Task criada com sucesso!");
       onOpenChange(false);
 
@@ -91,8 +111,11 @@ export default function AddTaskDialog({
         accountId: accountId || "",
       });
     } catch (error) {
-      console.error("Erro ao criar task:", error);
+      console.error("[AddTaskDialog] Erro ao criar task:", error);
       toast.error("Erro ao criar task. Tente novamente.");
+    } finally {
+      console.log("[AddTaskDialog] Setting loading to false");
+      setLoading(false);
     }
   };
 
@@ -246,10 +269,12 @@ export default function AddTaskDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancelar
           </Button>
-          <Button type="button" onClick={handleSubmit}>Criar Task</Button>
+          <Button type="button" onClick={handleSubmit} disabled={loading}>
+            {loading ? "Criando..." : "Criar Task"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

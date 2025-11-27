@@ -23,7 +23,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   Building2,
-  MapPin,
   Users,
   Phone,
   Plus,
@@ -32,6 +31,9 @@ import {
   TrendingUp,
   Minus,
   X,
+  DollarSign,
+  UserCheck,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -40,6 +42,22 @@ interface AddClientDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+// Pre-populated suggested tags
+const SUGGESTED_TAGS = [
+  "SaaS",
+  "B2B",
+  "B2C",
+  "Enterprise",
+  "Mid-Market",
+  "SMB",
+  "Startup",
+  "Scale-up",
+  "Tech",
+  "Fintech",
+  "Healthtech",
+  "Edtech",
+];
 
 export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProps) {
   const { addClient } = useClientsContext();
@@ -53,43 +71,27 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
     }
   }, [isOpen]);
 
-  // Dados da Empresa
+  // Company Data
   const [name, setName] = useState("");
   const [legalName, setLegalName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [industry, setIndustry] = useState("");
   const [website, setWebsite] = useState("");
-
-  // Endereço
-  const [address, setAddress] = useState({
-    street: "",
-    number: "",
-    complement: "",
-    neighborhood: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    country: "Brasil",
-  });
-
-  // Informações Comerciais
   const [companySize, setCompanySize] = useState<string>("11-50");
-  const [revenue, setRevenue] = useState("");
-  const [foundedYear, setFoundedYear] = useState<number>(new Date().getFullYear());
 
-  // Mapa de Poder
+  // Power Map (Winning by Design)
   const [powerMap, setPowerMap] = useState<PowerMapContact[]>([]);
   const [newStakeholder, setNewStakeholder] = useState({
     name: "",
     role: "",
     department: "",
-    influence: "neutral" as const,
+    influence: "champion" as const,
     email: "",
     phone: "",
     notes: "",
   });
 
-  // Contatos
+  // Contacts
   const [contacts, setContacts] = useState<ClientContact[]>([]);
   const [newContact, setNewContact] = useState({
     type: "phone" as const,
@@ -98,7 +100,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
     isPrimary: false,
   });
 
-  // Notas e Tags
+  // Notes and Tags
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
@@ -119,7 +121,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
       name: "",
       role: "",
       department: "",
-      influence: "neutral",
+      influence: "champion",
       email: "",
       phone: "",
       notes: "",
@@ -156,9 +158,10 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
     setContacts(contacts.filter((c) => c.id !== id));
   };
 
-  const handleAddTag = () => {
-    if (newTag && !tags.includes(newTag)) {
-      setTags([...tags, newTag]);
+  const handleAddTag = (tag?: string) => {
+    const tagToAdd = tag || newTag;
+    if (tagToAdd && !tags.includes(tagToAdd)) {
+      setTags([...tags, tagToAdd]);
       setNewTag("");
     }
   };
@@ -167,19 +170,13 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
     setTags(tags.filter((t) => t !== tag));
   };
 
-
-
   const handleSubmit = async () => {
-    console.log("Tentando cadastrar cliente:", { name, legalName, cnpj });
-
     if (!name || !legalName || !cnpj) {
-      console.warn("Campos obrigatórios faltando");
       toast.error("Preencha os campos obrigatórios");
       return;
     }
 
     try {
-      console.log("Chamando addClient...");
       setIsSubmitting(true);
       const newClient = await addClient({
         name,
@@ -187,10 +184,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
         cnpj,
         industry,
         website,
-        address,
         companySize: companySize as any,
-        revenue,
-        foundedYear,
         powerMap,
         contacts,
         notes,
@@ -211,25 +205,28 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
 
   const getInfluenceIcon = (influence: string) => {
     switch (influence) {
+      case "economic_buyer":
+        return <DollarSign className="h-4 w-4 text-purple-600" />;
       case "champion":
         return <Star className="h-4 w-4 text-green-600" />;
       case "influencer":
         return <TrendingUp className="h-4 w-4 text-blue-600" />;
-      case "neutral":
-        return <Minus className="h-4 w-4 text-gray-600" />;
+      case "technical_buyer":
+        return <Shield className="h-4 w-4 text-indigo-600" />;
       case "blocker":
         return <X className="h-4 w-4 text-red-600" />;
       default:
-        return null;
+        return <UserCheck className="h-4 w-4 text-gray-600" />;
     }
   };
 
   const getInfluenceLabel = (influence: string) => {
     const labels: Record<string, string> = {
-      champion: "Campeão",
-      influencer: "Influenciador",
-      neutral: "Neutro",
-      blocker: "Bloqueador",
+      economic_buyer: "Economic Buyer",
+      champion: "Champion",
+      influencer: "Influencer",
+      technical_buyer: "Technical Buyer",
+      blocker: "Blocker",
     };
     return labels[influence] || influence;
   };
@@ -246,20 +243,16 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[90vw] max-w-[1800px] max-h-[95vh] overflow-y-auto p-8">
         <DialogHeader>
           <DialogTitle className="text-2xl">Novo Cliente</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="company" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="company" className="mt-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="company">
               <Building2 className="h-4 w-4 mr-2" />
               Empresa
-            </TabsTrigger>
-            <TabsTrigger value="address">
-              <MapPin className="h-4 w-4 mr-2" />
-              Endereço
             </TabsTrigger>
             <TabsTrigger value="powermap">
               <Users className="h-4 w-4 mr-2" />
@@ -271,10 +264,9 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
             </TabsTrigger>
           </TabsList>
 
-          {/* Aba: Empresa */}
-          <TabsContent value="company" className="space-y-4 mt-4">
-
-            <div className="grid grid-cols-2 gap-4">
+          {/* Company Tab */}
+          <TabsContent value="company" className="space-y-6 mt-6">
+            <div className="grid grid-cols-3 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="name">
                   Nome Fantasia <span className="text-red-500">*</span>
@@ -284,6 +276,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex: Acme Corp"
+                  className="h-11"
                 />
               </div>
 
@@ -296,6 +289,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                   value={legalName}
                   onChange={(e) => setLegalName(e.target.value)}
                   placeholder="Ex: Acme Corporation LTDA"
+                  className="h-11"
                 />
               </div>
 
@@ -308,6 +302,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                   value={cnpj}
                   onChange={(e) => setCnpj(e.target.value)}
                   placeholder="00.000.000/0000-00"
+                  className="h-11"
                 />
               </div>
 
@@ -318,6 +313,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
                   placeholder="Ex: Tecnologia"
+                  className="h-11"
                 />
               </div>
 
@@ -328,13 +324,14 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://exemplo.com"
+                  className="h-11"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="companySize">Tamanho da Empresa</Label>
                 <Select value={companySize} onValueChange={setCompanySize}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -347,27 +344,6 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="revenue">Faturamento Anual</Label>
-                <Input
-                  id="revenue"
-                  value={revenue}
-                  onChange={(e) => setRevenue(e.target.value)}
-                  placeholder="Ex: R$ 10M"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="foundedYear">Ano de Fundação</Label>
-                <Input
-                  id="foundedYear"
-                  type="number"
-                  value={foundedYear}
-                  onChange={(e) => setFoundedYear(parseInt(e.target.value))}
-                  placeholder="2020"
-                />
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -377,144 +353,86 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Informações adicionais sobre o cliente..."
-                rows={3}
+                rows={6}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Tags</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="Adicionar tag..."
-                  onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
-                />
-                <Button type="button" onClick={handleAddTag} variant="outline">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                      <button
-                        onClick={() => handleRemoveTag(tag)}
-                        className="ml-2 hover:text-red-600"
+            <div className="space-y-4">
+              <div>
+                <Label>Tags</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder="Digite ou selecione uma tag..."
+                    onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
+                    className="h-12 text-base"
+                  />
+                  <Button type="button" onClick={() => handleAddTag()} variant="outline" className="h-12 px-6">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar
+                  </Button>
+                </div>
+
+                {/* Suggested Tags Below Input */}
+                <div className="mt-3">
+                  <p className="text-sm text-muted-foreground mb-2">Sugestões (clique para preencher):</p>
+                  <div className="flex flex-wrap gap-2">
+                    {SUGGESTED_TAGS.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-accent transition-colors px-3 py-1.5"
+                        onClick={() => setNewTag(tag)}
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Selected Tags */}
+              {tags.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Tags selecionadas:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <Badge key={tag} variant="default" className="px-3 py-1.5">
+                        {tag}
+                        <button
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-2 hover:text-red-200 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           </TabsContent>
 
-          {/* Aba: Endereço */}
-          <TabsContent value="address" className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">CEP</Label>
-                <Input
-                  id="zipCode"
-                  value={address.zipCode}
-                  onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
-                  placeholder="00000-000"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="street">Rua</Label>
-                <Input
-                  id="street"
-                  value={address.street}
-                  onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                  placeholder="Nome da rua"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="number">Número</Label>
-                <Input
-                  id="number"
-                  value={address.number}
-                  onChange={(e) => setAddress({ ...address, number: e.target.value })}
-                  placeholder="123"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="complement">Complemento</Label>
-                <Input
-                  id="complement"
-                  value={address.complement}
-                  onChange={(e) => setAddress({ ...address, complement: e.target.value })}
-                  placeholder="Sala, andar, etc."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="neighborhood">Bairro</Label>
-                <Input
-                  id="neighborhood"
-                  value={address.neighborhood}
-                  onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
-                  placeholder="Nome do bairro"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="city">Cidade</Label>
-                <Input
-                  id="city"
-                  value={address.city}
-                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                  placeholder="São Paulo"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="state">Estado</Label>
-                <Input
-                  id="state"
-                  value={address.state}
-                  onChange={(e) => setAddress({ ...address, state: e.target.value })}
-                  placeholder="SP"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="country">País</Label>
-                <Input
-                  id="country"
-                  value={address.country}
-                  onChange={(e) => setAddress({ ...address, country: e.target.value })}
-                  placeholder="Brasil"
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Aba: Mapa de Poder */}
-          <TabsContent value="powermap" className="space-y-4 mt-4">
-            <Card className="p-4 bg-blue-50 border-blue-200">
+          {/* Power Map Tab - Winning by Design */}
+          <TabsContent value="powermap" className="space-y-6 mt-6">
+            <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
               <p className="text-sm text-blue-900">
-                <strong>Mapa de Poder:</strong> Cadastre os principais stakeholders e tomadores de decisão da empresa.
+                <strong>Mapa de Poder (Winning by Design):</strong> Identifique os stakeholders-chave usando a metodologia Winning by Design. Mapeie quem toma decisões econômicas, quem defende sua solução, quem influencia e quem pode bloquear.
               </p>
             </Card>
 
-            {/* Formulário de Novo Stakeholder */}
-            <Card className="p-4">
-              <h3 className="font-semibold mb-3">Adicionar Stakeholder</h3>
-              <div className="grid grid-cols-2 gap-3">
+            {/* Add Stakeholder Form */}
+            <Card className="p-6 space-y-4 bg-gray-50">
+              <h3 className="font-semibold text-lg">Adicionar Stakeholder</h3>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Nome *</Label>
                   <Input
                     value={newStakeholder.name}
                     onChange={(e) => setNewStakeholder({ ...newStakeholder, name: e.target.value })}
                     placeholder="Nome completo"
+                    className="h-11"
                   />
                 </div>
 
@@ -523,7 +441,8 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                   <Input
                     value={newStakeholder.role}
                     onChange={(e) => setNewStakeholder({ ...newStakeholder, role: e.target.value })}
-                    placeholder="CEO, CTO, etc."
+                    placeholder="CEO, CTO, CFO, etc."
+                    className="h-11"
                   />
                 </div>
 
@@ -532,24 +451,51 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                   <Input
                     value={newStakeholder.department}
                     onChange={(e) => setNewStakeholder({ ...newStakeholder, department: e.target.value })}
-                    placeholder="TI, Comercial, etc."
+                    placeholder="TI, Financeiro, Comercial, etc."
+                    className="h-11"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Nível de Influência</Label>
+                  <Label>Papel no Deal (Winning by Design)</Label>
                   <Select
                     value={newStakeholder.influence}
                     onValueChange={(value: any) => setNewStakeholder({ ...newStakeholder, influence: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="champion">Campeão</SelectItem>
-                      <SelectItem value="influencer">Influenciador</SelectItem>
-                      <SelectItem value="neutral">Neutro</SelectItem>
-                      <SelectItem value="blocker">Bloqueador</SelectItem>
+                      <SelectItem value="economic_buyer">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-purple-600" />
+                          Economic Buyer
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="champion">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-green-600" />
+                          Champion
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="influencer">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-blue-600" />
+                          Influencer
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="technical_buyer">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-indigo-600" />
+                          Technical Buyer
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="blocker">
+                        <div className="flex items-center gap-2">
+                          <X className="h-4 w-4 text-red-600" />
+                          Blocker
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -561,6 +507,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                     value={newStakeholder.email}
                     onChange={(e) => setNewStakeholder({ ...newStakeholder, email: e.target.value })}
                     placeholder="email@empresa.com"
+                    className="h-11"
                   />
                 </div>
 
@@ -570,6 +517,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                     value={newStakeholder.phone}
                     onChange={(e) => setNewStakeholder({ ...newStakeholder, phone: e.target.value })}
                     placeholder="(11) 99999-9999"
+                    className="h-11"
                   />
                 </div>
 
@@ -584,69 +532,72 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                 </div>
               </div>
 
-              <Button type="button" onClick={handleAddStakeholder} className="mt-3">
+              <Button type="button" onClick={handleAddStakeholder} className="w-full h-11">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Stakeholder
               </Button>
             </Card>
 
-            {/* Lista de Stakeholders */}
+            {/* Stakeholders List */}
             {powerMap.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-semibold">Stakeholders Cadastrados ({powerMap.length})</h3>
-                {powerMap.map((stakeholder) => (
-                  <Card key={stakeholder.id} className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-semibold">{stakeholder.name}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            {getInfluenceIcon(stakeholder.influence)}
-                            <span className="ml-1">{getInfluenceLabel(stakeholder.influence)}</span>
-                          </Badge>
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg">Stakeholders Cadastrados ({powerMap.length})</h3>
+                <div className="grid grid-cols-1 gap-3">
+                  {powerMap.map((stakeholder) => (
+                    <Card key={stakeholder.id} className="p-5 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-3">
+                            <h4 className="font-semibold text-lg">{stakeholder.name}</h4>
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              {getInfluenceIcon(stakeholder.influence)}
+                              <span>{getInfluenceLabel(stakeholder.influence)}</span>
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p><strong>Cargo:</strong> {stakeholder.role}</p>
+                            {stakeholder.department && <p><strong>Departamento:</strong> {stakeholder.department}</p>}
+                            {stakeholder.email && <p><strong>E-mail:</strong> {stakeholder.email}</p>}
+                            {stakeholder.phone && <p><strong>Telefone:</strong> {stakeholder.phone}</p>}
+                            {stakeholder.notes && <p><strong>Observações:</strong> {stakeholder.notes}</p>}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <p><strong>Cargo:</strong> {stakeholder.role}</p>
-                          {stakeholder.department && <p><strong>Departamento:</strong> {stakeholder.department}</p>}
-                          {stakeholder.email && <p><strong>E-mail:</strong> {stakeholder.email}</p>}
-                          {stakeholder.phone && <p><strong>Telefone:</strong> {stakeholder.phone}</p>}
-                          {stakeholder.notes && <p><strong>Observações:</strong> {stakeholder.notes}</p>}
-                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveStakeholder(stakeholder.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveStakeholder(stakeholder.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
           </TabsContent>
 
-          {/* Aba: Contatos */}
-          <TabsContent value="contacts" className="space-y-4 mt-4">
+          {/* Contacts Tab */}
+          <TabsContent value="contacts" className="space-y-6 mt-6">
             <Card className="p-4 bg-green-50 border-green-200">
               <p className="text-sm text-green-900">
-                <strong>Contatos:</strong> Cadastre telefones, WhatsApp, e-mails e outros meios de contato.
+                <strong>Contatos:</strong> Cadastre telefones, WhatsApp, e-mails e outros meios de contato da empresa.
               </p>
             </Card>
 
-            {/* Formulário de Novo Contato */}
-            <Card className="p-4">
-              <h3 className="font-semibold mb-3">Adicionar Contato</h3>
-              <div className="grid grid-cols-2 gap-3">
+            {/* Add Contact Form */}
+            <Card className="p-6 space-y-4 bg-gray-50">
+              <h3 className="font-semibold text-lg">Adicionar Contato</h3>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Tipo</Label>
                   <Select
                     value={newContact.type}
                     onValueChange={(value: any) => setNewContact({ ...newContact, type: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -664,6 +615,7 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                     value={newContact.value}
                     onChange={(e) => setNewContact({ ...newContact, value: e.target.value })}
                     placeholder="(11) 99999-9999 ou email@empresa.com"
+                    className="h-11"
                   />
                 </div>
 
@@ -673,35 +625,36 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                     value={newContact.label}
                     onChange={(e) => setNewContact({ ...newContact, label: e.target.value })}
                     placeholder="Ex: Telefone Comercial, WhatsApp CEO"
+                    className="h-11"
                   />
                 </div>
 
                 <div className="space-y-2 flex items-end">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className="flex items-center gap-2 cursor-pointer h-11">
                     <input
                       type="checkbox"
                       checked={newContact.isPrimary}
                       onChange={(e) => setNewContact({ ...newContact, isPrimary: e.target.checked })}
                       className="w-4 h-4"
                     />
-                    <span className="text-sm">Contato Principal</span>
+                    <span className="text-sm font-medium">Contato Principal</span>
                   </label>
                 </div>
               </div>
 
-              <Button type="button" onClick={handleAddContact} className="mt-3">
+              <Button type="button" onClick={handleAddContact} className="w-full h-11">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Contato
               </Button>
             </Card>
 
-            {/* Lista de Contatos */}
+            {/* Contacts List */}
             {contacts.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-semibold">Contatos Cadastrados ({contacts.length})</h3>
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg">Contatos Cadastrados ({contacts.length})</h3>
                 <div className="grid grid-cols-1 gap-2">
                   {contacts.map((contact) => (
-                    <Card key={contact.id} className="p-3">
+                    <Card key={contact.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Badge variant="outline">{getContactTypeLabel(contact.type)}</Badge>
@@ -718,8 +671,9 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveContact(contact.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
-                          <Trash2 className="h-4 w-4 text-red-600" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </Card>
@@ -730,11 +684,11 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
+          <Button variant="outline" onClick={onClose} className="h-11 px-6">
             Cancelar
           </Button>
-          <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+          <Button type="button" onClick={handleSubmit} disabled={isSubmitting} className="h-11 px-6">
             {isSubmitting ? "Cadastrando..." : "Cadastrar Cliente"}
           </Button>
         </div>
@@ -742,4 +696,3 @@ export default function AddClientDialog({ isOpen, onClose }: AddClientDialogProp
     </Dialog>
   );
 }
-

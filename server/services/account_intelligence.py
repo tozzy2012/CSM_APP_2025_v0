@@ -34,15 +34,49 @@ class AccountIntelligenceService:
             raise ValueError(f"Account {account_id} not found")
         
         # Build context
-        context = {
-            "account": self._get_account_data(account),
-            "financial": await self._get_financial_metrics(account),
-            "health": await self._get_health_metrics(account),
-            "tasks": await self._get_task_metrics(account_id),
-            "activities": await self._get_activity_metrics(account_id),
-            "engagement": await self._get_engagement_metrics(account_id),
-            "tags": account.tags if hasattr(account, 'tags') else [],
-        }
+        # Build context
+        try:
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            logger.info(f"Building context for account {account_id}")
+            
+            account_data = self._get_account_data(account)
+            logger.info("Got account data")
+            
+            financial = await self._get_financial_metrics(account)
+            logger.info("Got financial metrics")
+            
+            health = await self._get_health_metrics(account)
+            logger.info("Got health metrics")
+            
+            tasks = await self._get_task_metrics(account_id)
+            logger.info("Got task metrics")
+            
+            activities = await self._get_activity_metrics(account_id)
+            logger.info("Got activity metrics")
+            
+            engagement = await self._get_engagement_metrics(account_id)
+            logger.info("Got engagement metrics")
+            
+            kickoff = self._get_kickoff_data(account)
+            logger.info("Got kickoff data")
+
+            context = {
+                "account": account_data,
+                "financial": financial,
+                "health": health,
+                "tasks": tasks,
+                "activities": activities,
+                "engagement": engagement,
+                "tags": account.tags if hasattr(account, 'tags') else [],
+                "kickoff": kickoff,
+            }
+        except Exception as e:
+            import traceback
+            logger.error(f"Error building context: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise e
         
         # Detect risks and opportunities
         context["risks"] = await self._detect_risks(context)
@@ -56,19 +90,46 @@ class AccountIntelligenceService:
             "id": account.id,
             "name": account.name,
             "industry": account.industry,
-            "stage": account.stage,
             "type": account.type,
-            "status": account.status,
+            "health_status": account.health_status,
             "csm": account.csm,
-            "employees": account.employees,
             "website": account.website,
             "created_at": account.created_at.isoformat() if account.created_at else None,
+        }
+
+    def _get_kickoff_data(self, account: Account) -> Dict:
+        """Extract kickoff and SPICED information"""
+        if not account.internal_kickoff:
+            return {}
+            
+        k = account.internal_kickoff
+        return {
+            "sales_rep": k.get("salesRep"),
+            "origin": k.get("saleOrigin"),
+            "origin_other": k.get("saleOriginOther"),
+            "negotiation": {
+                "negotiated_with": k.get("negotiatedWith"),
+                "details": k.get("negotiationDetails"),
+                "promises": k.get("promisesMade"),
+            },
+            "expectations": {
+                "outcomes": k.get("expectedOutcomes"),
+                "success_criteria": k.get("successCriteria"),
+            },
+            "spiced": {
+                "situation": k.get("customerSituation"),
+                "pain": k.get("painPoints"),
+                "impact": k.get("businessImpact"),
+                "critical_event": k.get("criticalDeadline"),
+                "decision": k.get("decisionCriteria"),
+            },
+            "risks": k.get("redFlags"),
+            "champion": k.get("championIdentified"),
         }
     
     async def _get_financial_metrics(self, account: Account) -> Dict:
         """Calculate financial metrics and trends"""
         current_mrr = float(account.mrr) if account.mrr else 0.0
-        contract_value = float(account.contract_value) if account.contract_value else 0.0
         
         # Calculate days to renewal
         days_to_renewal = None
@@ -78,7 +139,6 @@ class AccountIntelligenceService:
         return {
             "current_mrr": current_mrr,
             "arr": current_mrr * 12,
-            "contract_value": contract_value,
             "contract_start": account.contract_start.isoformat() if account.contract_start else None,
             "contract_end": account.contract_end.isoformat() if account.contract_end else None,
             "days_to_renewal": days_to_renewal,
@@ -90,10 +150,11 @@ class AccountIntelligenceService:
     
     async def _get_health_metrics(self, account: Account) -> Dict:
         """Get health score metrics including latest evaluation details"""
-        current_score = account.health_score if account.health_score else 75
-        
         # Fetch latest health score evaluation
         latest_evaluation = crud.get_latest_health_score_evaluation(self.db, account.id)
+        
+        # Use evaluation score if available, otherwise default to 75
+        current_score = latest_evaluation.total_score if latest_evaluation else 75
         
         health_data = {
             "current_score": current_score,

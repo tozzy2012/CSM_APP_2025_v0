@@ -72,7 +72,7 @@ export default function SSOCallback() {
 
                 // --- Sync with Mock Auth System (AuthContext) ---
                 const STORAGE_KEY = "zapper_users";
-                const SESSION_KEY = "zapper_session";
+                const SESSION_KEY = "zapper_session_v2";
 
                 // 1. Get existing users
                 const storedUsers = localStorage.getItem(STORAGE_KEY);

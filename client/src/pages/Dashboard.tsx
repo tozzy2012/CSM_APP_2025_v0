@@ -25,18 +25,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import EditAccountDialog from "@/components/EditAccountDialog";
+import CSMFilter from "@/components/CSMFilter";
 
 const Dashboard = () => {
   const { accounts } = useAccountsContext();
   const [editingAccount, setEditingAccount] = useState<any>(null);
+  const [selectedCSM, setSelectedCSM] = useState<string>("all");
 
-  // Calcular estatísticas gerais
-  const totalAccounts = accounts.length;
-  const avgHealthScore = accounts.length > 0
-    ? Math.round(accounts.reduce((sum, acc) => sum + (acc.healthScore || 0), 0) / accounts.length)
+  // Filtrar accounts por CSM selecionado
+  const filteredAccounts = selectedCSM === "all"
+    ? accounts
+    : accounts.filter(acc => acc.csm === selectedCSM);
+
+  // Calcular estatísticas gerais com base nos accounts filtrados
+  const totalAccounts = filteredAccounts.length;
+  const avgHealthScore = filteredAccounts.length > 0
+    ? Math.round(filteredAccounts.reduce((sum, acc) => sum + (acc.healthScore || 0), 0) / filteredAccounts.length)
     : 0;
-  const totalMRR = accounts.reduce((sum, acc) => sum + (acc.mrr || 0), 0);
-  const accountsAtRisk = accounts.filter(acc =>
+  const totalMRR = filteredAccounts.reduce((sum, acc) => sum + (acc.mrr || 0), 0);
+  const accountsAtRisk = filteredAccounts.filter(acc =>
     (acc.healthScore || 0) < 50 || acc.status === 'Crítico' || acc.status === 'Salvamento'
   ).length;
 
@@ -65,11 +72,14 @@ const Dashboard = () => {
   return (
     <div className="p-8 space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
-          Visão geral das suas contas e pipeline
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Visão geral das suas contas e pipeline
+          </p>
+        </div>
+        <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />
       </div>
 
       {/* Tabs - Redesigned with prominent navigation */}
@@ -201,7 +211,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {accounts.map((account) => (
+                {filteredAccounts.map((account) => (
                   <Card key={account.id} className="group hover:shadow-lg transition-all duration-200 bg-white border border-gray-200 hover:border-blue-300 relative overflow-hidden">
                     <CardContent className="p-4">
                       <div className="space-y-3">
@@ -300,8 +310,17 @@ const Dashboard = () => {
         </TabsContent>
 
         {/* Kanban Board */}
-        <TabsContent value="kanban">
-          <KanbanBoard />
+        <TabsContent value="kanban" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Kanban Board</h3>
+              <p className="text-sm text-muted-foreground">Gerencie suas contas visualmente</p>
+            </div>
+            <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />
+          </div>
+          <div className="h-[calc(100vh-300px)]">
+            <KanbanBoard accounts={filteredAccounts} />
+          </div>
         </TabsContent>
 
         {/* Dashboard Executivo */}

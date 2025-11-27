@@ -34,7 +34,12 @@ export function useAccountStatus() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        setStatuses(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setStatuses(parsed);
+        } else {
+          setStatuses(defaultStatuses);
+        }
       } catch (error) {
         console.error("Erro ao carregar status:", error);
         setStatuses(defaultStatuses);

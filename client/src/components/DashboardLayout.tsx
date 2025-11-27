@@ -60,7 +60,6 @@ const navItems: NavItem[] = [
     ]
   },
   { path: "/playbooks", label: "Playbooks", icon: BookOpen },
-  { path: "/invites", label: "Convites", icon: Mail },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 

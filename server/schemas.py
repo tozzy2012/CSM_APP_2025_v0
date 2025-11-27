@@ -68,18 +68,6 @@ class ClientContact(BaseModel):
     isPrimary: bool
 
 
-class Address(BaseModel):
-    """Schema para endereço"""
-    street: str
-    number: str
-    complement: str
-    neighborhood: str
-    city: str
-    state: str
-    zipCode: str
-    country: str
-
-
 class ClientBase(BaseModel):
     """Schema base para Client"""
     name: str = Field(..., min_length=1, max_length=255)
@@ -87,10 +75,7 @@ class ClientBase(BaseModel):
     cnpj: str = Field(..., min_length=1, max_length=18)
     industry: Optional[str] = None
     website: Optional[str] = None
-    address: Optional[Address] = None
     company_size: Optional[str] = Field(None, alias="companySize")
-    revenue: Optional[str] = None
-    founded_year: Optional[int] = Field(None, alias="foundedYear")
     power_map: List[PowerMapContact] = Field(default=[], alias="powerMap")
     contacts: List[ClientContact] = Field(default=[])
     notes: Optional[str] = None
@@ -112,10 +97,7 @@ class ClientUpdate(BaseModel):
     cnpj: Optional[str] = Field(None, min_length=1, max_length=18)
     industry: Optional[str] = None
     website: Optional[str] = None
-    address: Optional[Address] = None
     company_size: Optional[str] = Field(None, alias="companySize")
-    revenue: Optional[str] = None
-    founded_year: Optional[int] = Field(None, alias="foundedYear")
     power_map: Optional[List[PowerMapContact]] = Field(None, alias="powerMap")
     contacts: Optional[List[ClientContact]] = None
     notes: Optional[str] = None
@@ -137,23 +119,61 @@ class ClientResponse(ClientBase):
 # ACCOUNT SCHEMAS
 # ============================================================================
 
+class InternalKickoff(BaseModel):
+    """Schema for internal kickoff - sales to CS handoff information"""
+    # Sales Information
+    sales_rep: Optional[str] = Field(None, alias="salesRep")
+    sale_origin: Optional[str] = Field(None, alias="saleOrigin")  # inbound, outbound, vendedor, outro
+    sale_origin_other: Optional[str] = Field(None, alias="saleOriginOther")
+    
+    # SPICED Framework - Situation
+    negotiated_with: Optional[str] = Field(None, alias="negotiatedWith")
+    customer_situation: Optional[str] = Field(None, alias="customerSituation")
+    existing_tools: Optional[str] = Field(None, alias="existingTools")
+    
+    # SPICED - Pain
+    pain_points: Optional[str] = Field(None, alias="painPoints")
+    previous_attempts: Optional[str] = Field(None, alias="previousAttempts")
+    
+    # SPICED - Impact
+    expected_outcomes: Optional[str] = Field(None, alias="expectedOutcomes")
+    success_criteria: Optional[str] = Field(None, alias="successCriteria")
+    business_impact: Optional[str] = Field(None, alias="businessImpact")
+    
+    # SPICED - Critical Event
+    critical_deadline: Optional[str] = Field(None, alias="criticalDeadline")
+    urgency_reason: Optional[str] = Field(None, alias="urgencyReason")
+    
+    # SPICED - Decision
+    why_chose_us: Optional[str] = Field(None, alias="whyChoseUs")
+    competitors_considered: Optional[str] = Field(None, alias="competitorsConsidered")
+    decision_criteria: Optional[str] = Field(None, alias="decisionCriteria")
+    
+    # Additional CS Best Practices
+    negotiation_details: Optional[str] = Field(None, alias="negotiationDetails")
+    promises_made: Optional[str] = Field(None, alias="promisesMade")
+    red_flags: Optional[str] = Field(None, alias="redFlags")
+    champion_identified: Optional[str] = Field(None, alias="championIdentified")
+    communication_preferences: Optional[str] = Field(None, alias="communicationPreferences")
+    
+    model_config = ConfigDict(populate_by_name=True)
+
+
+
 class AccountBase(BaseModel):
     """Schema base para Account"""
     client_id: str = Field(..., alias="clientId")
     name: str = Field(..., min_length=1, max_length=255)
     industry: Optional[str] = None
-    stage: Optional[str] = None
     type: Optional[str] = None
     status: Optional[str] = None
     health_status: Optional[str] = Field(None, alias="healthStatus")
-    health_score: int = Field(default=75, alias="healthScore")
     mrr: float = Field(default=0.0)
-    contract_value: float = Field(default=0.0, alias="contractValue")
     contract_start: Optional[date] = Field(None, alias="contractStart")
     contract_end: Optional[date] = Field(None, alias="contractEnd")
     csm: Optional[str] = None
-    employees: int = Field(default=0)
     website: Optional[str] = None
+    internal_kickoff: Optional[InternalKickoff] = Field(None, alias="internalKickoff")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -167,18 +187,15 @@ class AccountUpdate(BaseModel):
     """Schema para atualização de Account"""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     industry: Optional[str] = None
-    stage: Optional[str] = None
     type: Optional[str] = None
     status: Optional[str] = None
     health_status: Optional[str] = Field(None, alias="healthStatus")
-    health_score: Optional[int] = Field(None, alias="healthScore")
     mrr: Optional[float] = None
-    contract_value: Optional[float] = Field(None, alias="contractValue")
     contract_start: Optional[date] = Field(None, alias="contractStart")
     contract_end: Optional[date] = Field(None, alias="contractEnd")
     csm: Optional[str] = None
-    employees: Optional[int] = None
     website: Optional[str] = None
+    internal_kickoff: Optional[InternalKickoff] = Field(None, alias="internalKickoff")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -510,6 +527,13 @@ class InviteBase(BaseModel):
 class InviteCreate(InviteBase):
     """Schema para criação de Invite"""
     pass
+
+
+class InviteUpdate(BaseModel):
+    """Schema para atualização de Invite"""
+    role: Optional[str] = None
+    status: Optional[str] = None
+
 
 
 class InviteResponse(InviteBase):

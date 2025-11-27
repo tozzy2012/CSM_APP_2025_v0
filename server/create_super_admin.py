@@ -28,34 +28,28 @@ db = SessionLocal()
 
 try:
     # Verificar se super admin já existe
-    existing_admin = db.query(User).filter(User.email == "admin").first()
+    existing_admin = db.query(User).filter(User.email == "admin@csm.com").first()
     
     if existing_admin:
-        print("⚠️ Super admin já existe!")
+        print("⚠️  Super admin já existe!")
         print(f"   Email: {existing_admin.email}")
         print(f"   Nome: {existing_admin.name}")
-        print(f"   Role: {existing_admin.role}")
     else:
         # Criar super admin
         super_admin = User(
             id="super-admin-001",
-            email="admin",
+            email="admin@csm.com",
             password_hash=hash_password("adminadmin"),
             name="Super Administrador",
-            role="SUPER_ADMIN",
-            organization_id=None,  # Super admin não tem organização
-            active=True,
-            created_at=datetime.datetime.utcnow(),
-            updated_at=datetime.datetime.utcnow()
+            active=True
         )
         
         db.add(super_admin)
         db.commit()
         
         print("✅ Super admin criado com sucesso!")
-        print("   Email: admin")
+        print("   Email: admin@csm.com")
         print("   Senha: adminadmin")
-        print("   Role: SUPER_ADMIN")
         
 except Exception as e:
     print(f"❌ Erro: {e}")

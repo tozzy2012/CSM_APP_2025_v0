@@ -59,7 +59,7 @@ class ApiClient {
     } else {
       // Fallback for Dev/Mock Auth: Inject X-User-ID from localStorage session
       try {
-        const sessionStr = localStorage.getItem("zapper_session");
+        const sessionStr = localStorage.getItem("zapper_session_v2");
         if (sessionStr) {
           const session = JSON.parse(sessionStr);
           if (session.userId) {

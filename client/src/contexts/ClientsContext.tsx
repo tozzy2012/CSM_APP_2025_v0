@@ -25,10 +25,17 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
     if (currentUser?.role === "SUPER_ADMIN") {
       return clientsData.clients;
     }
+
+    // TODO: Re-enable filtering when backend supports multi-tenancy for clients
+    // Currently Client model does not have organizationId/tenantId
+    return clientsData.clients;
+
     // Admin da Org e CSM veem apenas clients da sua organização
+    /*
     return clientsData.clients.filter(
       (client) => client.organizationId === currentUser?.organizationId
     );
+    */
   }, [clientsData.clients, currentUser?.organizationId, currentUser?.role]);
 
   const contextValue = useMemo(

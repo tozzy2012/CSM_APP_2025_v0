@@ -52,26 +52,6 @@ function Router() {
       />
 
       <Route
-        path="/team"
-        component={() => (
-          <ProtectedRoute>
-            <DashboardLayout>
-              <Team />
-            </DashboardLayout>
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/invites"
-        component={() => (
-          <ProtectedRoute requiredRole={UserRole.SUPER_ADMIN}>
-            <DashboardLayout>
-              <Invites />
-            </DashboardLayout>
-          </ProtectedRoute>
-        )}
-      />
-      <Route
         path="/dashboard"
         component={() => (
           <ProtectedRoute>
