@@ -208,11 +208,15 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         <div className="p-6 border-b border-border flex justify-center">
-          <img
-            src="/logo.jpg"
-            alt={platformName}
-            className="h-12 w-auto object-contain"
-          />
+          <Link href="/dashboard">
+            <a className="block hover:opacity-90 transition-opacity">
+              <img
+                src="/logo.png"
+                alt={platformName}
+                className="h-12 w-auto object-contain"
+              />
+            </a>
+          </Link>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
