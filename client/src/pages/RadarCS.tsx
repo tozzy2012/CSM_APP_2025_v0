@@ -7,15 +7,23 @@ import { Link } from 'wouter';
 import {
     Newspaper,
     Users,
-    Building2,
-    TrendingUp,
     Sparkles,
+    BarChart3,
     RefreshCw,
-    ChevronRight,
+    TrendingUp,
+    TrendingDown,
+    Building2,
     Calendar,
     Tag,
-    BarChart3,
-} from 'lucide-react';
+    Filter,
+    Search,
+    User2,
+    FileText,
+    ChevronRight,
+    ChevronDown,
+    Loader2,
+    ExternalLink
+} from "lucide-react";
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -108,6 +116,7 @@ export default function RadarCS() {
                     publishedDate: news.published_date,
                     insights: news.insights,
                     createdAt: news.created_at,
+                    metadata: news.news_metadata || {},  // Include metadata with source info
                 })),
                 totalNews: item.total_news,
             }));
@@ -250,6 +259,23 @@ export default function RadarCS() {
         return 'text-red-600';
     };
 
+    // Filter news to only show those from last 30 days (not 7 days - see issue with old news)
+    const filterNewsByWeek = (newsItems: NewsItem[]) => {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        return newsItems.filter(news => {
+            if (!news.publishedDate) return true; // Include if no date
+            const publishedDate = new Date(news.publishedDate);
+            return publishedDate >= thirtyDaysAgo;
+        });
+    };
+
+    // Get source count (for now, it's just 1 source: OpenAI)
+    const getSourceCount = (newsItem: NewsItem) => {
+        return 1; // Currently all news from OpenAI
+    };
+
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
@@ -260,6 +286,9 @@ export default function RadarCS() {
                             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
                                 <Newspaper className="w-8 h-8 text-primary" />
                                 Radar CS
+                                <Badge variant="secondary" className="text-xs">
+                                    WIP
+                                </Badge>
                             </h1>
                             <p className="text-muted-foreground mt-1">
                                 Intelligence feed de notícias sobre seus accounts
@@ -446,6 +475,9 @@ export default function RadarCS() {
                 ) : (
                     <div className="space-y-6">
                         {accountsNews.map(({ account, newsItems }: any) => {
+                            // Filter news to only show last 7 days
+                            const filteredNews = newsItems ? filterNewsByWeek(newsItems) : [];
+
                             return (
                                 <Card key={account.id} className="hover:shadow-lg transition-all duration-200">
                                     <CardHeader className="pb-4">
@@ -464,7 +496,7 @@ export default function RadarCS() {
                                                     <div className="flex items-center gap-3 mb-2">
                                                         <h3 className="text-xl font-semibold">{account.name}</h3>
                                                         <Badge variant="outline" className="text-xs">
-                                                            {newsItems?.length || 0} notícias
+                                                            {filteredNews.length} notícias
                                                         </Badge>
                                                     </div>
 
@@ -508,18 +540,18 @@ export default function RadarCS() {
                                     </CardHeader>
 
                                     <CardContent className="pt-6">
-                                        {newsItems && newsItems.length > 0 ? (
+                                        {filteredNews && filteredNews.length > 0 ? (
                                             <Accordion type="single" collapsible className="w-full">
                                                 <AccordionItem value="news" className="border-0">
                                                     <AccordionTrigger className="hover:no-underline py-2">
                                                         <div className="flex items-center gap-2">
                                                             <Newspaper className="w-4 h-4 text-primary" />
-                                                            <span className="font-semibold">Ver {newsItems.length} notícia{newsItems.length > 1 ? 's' : ''}</span>
+                                                            <span className="font-semibold">Ver {filteredNews.length} notícia{filteredNews.length > 1 ? 's' : ''}</span>
                                                         </div>
                                                     </AccordionTrigger>
                                                     <AccordionContent>
                                                         <div className="space-y-4 pt-4">
-                                                            {newsItems.map((news: any) => {
+                                                            {filteredNews.map((news: any) => {
                                                                 const TypeIcon = getNewsTypeIcon(news.newsType);
                                                                 return (
                                                                     <div
@@ -564,17 +596,43 @@ export default function RadarCS() {
                                                                                     </div>
                                                                                 )}
 
+                                                                                {/* Sources Section */}
+                                                                                <div className="mt-4 pt-3 border-t">
+                                                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                                                                                        <span className="font-medium">📰 Fonte{news.metadata?.source_name ? '' : 's'}</span>
+                                                                                    </div>
+                                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                                        {news.metadata?.source_name && news.metadata?.source_url ? (
+                                                                                            <a
+                                                                                                href={news.metadata.source_url}
+                                                                                                target="_blank"
+                                                                                                rel="noopener noreferrer"
+                                                                                                className="inline-flex items-center gap-1 text-xs hover:underline text-primary"
+                                                                                            >
+                                                                                                <Badge variant="outline" className="text-xs hover:bg-primary/10 cursor-pointer">
+                                                                                                    {news.metadata.source_name}
+                                                                                                </Badge>
+                                                                                                <ExternalLink className="w-3 h-3" />
+                                                                                            </a>
+                                                                                        ) : (
+                                                                                            <Badge variant="outline" className="text-xs">
+                                                                                                {news.sourceType || 'OpenAI'}
+                                                                                            </Badge>
+                                                                                        )}
+                                                                                        {news.publishedDate && (
+                                                                                            <span className="text-xs text-muted-foreground">
+                                                                                                • {new Date(news.publishedDate).toLocaleDateString('pt-BR', {
+                                                                                                    day: '2-digit',
+                                                                                                    month: 'short',
+                                                                                                    year: 'numeric'
+                                                                                                })}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+
                                                                                 {/* News Footer */}
                                                                                 <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                                                                                    {news.publishedDate && (
-                                                                                        <div className="flex items-center gap-1">
-                                                                                            <Calendar className="w-3 h-3" />
-                                                                                            <span>
-                                                                                                {new Date(news.publishedDate).toLocaleDateString('pt-BR')}
-                                                                                            </span>
-                                                                                        </div>
-                                                                                    )}
-                                                                                    <span>•</span>
                                                                                     <div className="flex items-center gap-1">
                                                                                         <Tag className="w-3 h-3" />
                                                                                         <span className="capitalize">{news.newsType}</span>

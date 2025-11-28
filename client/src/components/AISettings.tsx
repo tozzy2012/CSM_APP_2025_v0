@@ -55,6 +55,7 @@ export default function AISettings() {
 
     // Form states
     const [apiKey, setApiKey] = useState("");
+    const [perplexityApiKey, setPerplexityApiKey] = useState("");
     const [systemPrompt, setSystemPrompt] = useState(SENIOR_CSM_PROMPT);
     const [creativityLevel, setCreativityLevel] = useState(0.5);
 
@@ -73,6 +74,7 @@ export default function AISettings() {
 
             if (data.settings?.ai) {
                 setApiKey(data.settings.ai.openaiApiKey || "");
+                setPerplexityApiKey(data.settings.ai.perplexityApiKey || "");
                 // Ensure we use the default prompt if the saved one is empty or null
                 const savedPrompt = data.settings.ai.systemPrompt;
                 setSystemPrompt(savedPrompt && savedPrompt.trim().length > 0 ? savedPrompt : SENIOR_CSM_PROMPT);
@@ -98,6 +100,7 @@ export default function AISettings() {
                 ...tenant.settings,
                 ai: {
                     openaiApiKey: apiKey,
+                    perplexityApiKey: perplexityApiKey,
                     systemPrompt,
                     creativityLevel
                 }
@@ -158,27 +161,56 @@ export default function AISettings() {
             </div>
 
             <div className="grid gap-6">
-                {/* OpenAI Configuration */}
+                {/* API Keys Configuration */}
                 <Card className="p-6">
                     <h3 className="text-lg font-semibold mb-4">Conexão</h3>
-                    <div className="grid gap-2">
-                        <Label htmlFor="apiKey">OpenAI API Key</Label>
-                        <div className="relative">
-                            <Input
-                                id="apiKey"
-                                type="password"
-                                value={apiKey}
-                                onChange={(e) => setApiKey(e.target.value)}
-                                placeholder="sk-..."
-                                className="pr-10"
-                            />
-                            <div className="absolute right-3 top-2.5 text-xs text-muted-foreground">
-                                {apiKey ? <Check className="w-4 h-4 text-green-500" /> : "Obrigatório"}
+                    <div className="grid gap-6">
+                        {/* OpenAI API Key */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="apiKey">OpenAI API Key</Label>
+                            <div className="relative">
+                                <Input
+                                    id="apiKey"
+                                    type="password"
+                                    value={apiKey}
+                                    onChange={(e) => setApiKey(e.target.value)}
+                                    placeholder="sk-..."
+                                    className="pr-10"
+                                />
+                                <div className="absolute right-3 top-2.5 text-xs text-muted-foreground">
+                                    {apiKey ? <Check className="w-4 h-4 text-green-500" /> : "Obrigatório"}
+                                </div>
                             </div>
+                            <p className="text-xs text-muted-foreground">
+                                Usada para análises de contas e geração de insights.
+                            </p>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                            Sua chave é criptografada e usada apenas para gerar análises.
-                        </p>
+
+                        <Separator />
+
+                        {/* Perplexity API Key */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="perplexityApiKey">
+                                Perplexity API Key
+                                <span className="ml-2 text-xs font-normal text-muted-foreground">(Opcional)</span>
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="perplexityApiKey"
+                                    type="password"
+                                    value={perplexityApiKey}
+                                    onChange={(e) => setPerplexityApiKey(e.target.value)}
+                                    placeholder="pplx-..."
+                                    className="pr-10"
+                                />
+                                <div className="absolute right-3 top-2.5 text-xs text-muted-foreground">
+                                    {perplexityApiKey && <Check className="w-4 h-4 text-green-500" />}
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Usada para buscar <strong>notícias reais em tempo real</strong> no Radar CS. Se não configurada, usará OpenAI.
+                            </p>
+                        </div>
                     </div>
                 </Card>
 

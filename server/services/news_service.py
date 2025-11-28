@@ -3,14 +3,21 @@ News Service
 Handles fetching and analyzing news for accounts using OpenAI
 """
 import json
+import logging
+import traceback
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc
 from uuid import uuid4
 
-from models import NewsItem, Account
+from models import NewsItem, Account, Tenant
 from services.openai_service import OpenAIService
+
+logger = logging.getLogger(__name__)
+
+# MODULE RELOAD MARKER - If you see this, the module has been reloaded
+print("🔄🔄🔄 NEWS_SERVICE MODULE LOADED - PERPLEXITY VERSION 🔄🔄🔄")
 
 
 class NewsService:
@@ -32,19 +39,31 @@ class NewsService:
         Returns:
             List of news items
         """
+        print(f"DEBUG: fetch_news_for_account called for {account_id}, force_refresh={force_refresh}")
+        
         # Check cache first (unless force refresh)
         if not force_refresh:
+            print("DEBUG: Checking cache...")
             cached_news = self._get_cached_news(account_id, max_age_hours=24)
             if cached_news:
+                print(f"DEBUG: Returning {len(cached_news)} cached items")
                 return cached_news
+            print("DEBUG: Cache miss or empty")
+        else:
+            print("DEBUG: Force refresh enabled, skipping cache")
         
         # Get account details
         account = self.db.query(Account).filter(Account.id == account_id).first()
         if not account:
+            print(f"DEBUG: Account {account_id} not found")
             raise ValueError(f"Account {account_id} not found")
         
+        print(f"DEBUG: Account found: {account.name}")
+        
         # Fetch news using OpenAI
+        print("DEBUG: Calling _fetch_news_from_openai...")
         news_items = await self._fetch_news_from_openai(account)
+        print(f"DEBUG: _fetch_news_from_openai returned {len(news_items)} items")
         
         # Save to database
         self._save_news_items(account_id, news_items)
@@ -102,7 +121,56 @@ class NewsService:
         return [self._news_item_to_dict(item) for item in news_items]
     
     async def _fetch_news_from_openai(self, account: Account) -> List[Dict]:
-        """Fetch news using OpenAI"""
+        """Fetch news using Perplexity (real-time) or OpenAI (synthetic fallback)"""
+        try:
+            # Load tenant settings to get API keys
+            if not self.openai_service._openai_key:
+                self.openai_service._load_default_tenant_settings()
+            
+            # Load tenant directly from database to get Perplexity key
+            tenant = self.db.query(Tenant).first()
+            
+            print("="*80)
+            print(f"DEBUG: Tenant found: {tenant is not None}")
+            
+            # Check if Perplexity API key is configured
+            perplexity_key = None
+            if tenant and tenant.settings:
+                ai_settings = tenant.settings.get('ai', {})
+                perplexity_key = ai_settings.get('perplexityApiKey')
+                print(f"DEBUG: AI Settings keys: {list(ai_settings.keys())}")
+                print(f"DEBUG: Perplexity key present: {bool(perplexity_key)}")
+                if perplexity_key:
+                    print(f"DEBUG: Perplexity key length: {len(str(perplexity_key))}")
+                    print(f"DEBUG: Perplexity key starts with: {str(perplexity_key)[:10]}")
+                logger.info(f"Tenant loaded. Perplexity key present: {bool(perplexity_key and len(str(perplexity_key)) > 10)}")
+            else:
+                print("DEBUG: Tenant NOT found or no settings")
+                logger.warning("Tenant not found or has no settings")
+            
+            # TEMPORARY: FORCE PERPLEXITY USAGE FOR TESTING
+            if perplexity_key:
+                print(f"DEBUG: ✅ FORCING PERPLEXITY for {account.name}")
+                logger.info(f"✅ FORCING Perplexity API for REAL-TIME news for account: {account.name}")
+                try:
+                    return await self._fetch_news_from_perplexity(account, perplexity_key)
+                except Exception as perplexity_error:
+                    print(f"DEBUG: ❌ Perplexity FAILED: {str(perplexity_error)}")
+                    logger.error(f"Perplexity failed, falling back to OpenAI: {str(perplexity_error)}")
+                    return await self._fetch_news_from_openai_legacy(account)
+            else:
+                print(f"DEBUG: ⚠️ NO Perplexity key, using OpenAI for {account.name}")
+                logger.info(f"⚠️ Perplexity not configured. Using OpenAI SYNTHETIC news for account: {account.name}")
+                return await self._fetch_news_from_openai_legacy(account)
+                
+        except Exception as e:
+            print(f"DEBUG: ERROR in _fetch_news_from_openai: {str(e)}")
+            logger.error(f"Error fetching news: {str(e)}")
+            logger.error(traceback.format_exc())
+            return []
+            
+    async def _fetch_news_from_openai_legacy(self, account: Account) -> List[Dict]:
+        """Fetch news using OpenAI (legacy/synthetic)"""
         # Build prompt for OpenAI
         prompt = self._build_news_prompt(account)
         
@@ -120,7 +188,7 @@ class NewsService:
             client = OpenAI(api_key=self.openai_service._openai_key)
             
             response = client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model="gpt-4o",  # Latest GPT-4 Omni model - faster and more capable
                 messages=[
                     {"role": "system", "content": self._get_news_system_prompt()},
                     {"role": "user", "content": prompt}
@@ -139,17 +207,153 @@ class NewsService:
         except Exception as e:
             raise RuntimeError(f"OpenAI API error: {str(e)}")
     
+    async def _fetch_news_from_perplexity(self, account: Account, api_key: str) -> List[Dict]:
+        """Fetch real-time news using Perplexity API"""
+        print(f"\n{'='*80}")
+        print(f"🔵 PERPLEXITY CALLED for {account.name}")
+        print(f"🔵 API Key: {api_key[:30]}...")
+        print(f"{'='*80}\n")
+        
+        try:
+            from openai import OpenAI
+            
+            # Build the prompt for real-time news
+            prompt = self._build_perplexity_news_prompt(account)
+            
+            print(f"🔵 Creating Perplexity client...")
+            # Perplexity uses OpenAI-compatible API
+            client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.perplexity.ai"
+            )
+            
+            print(f"🔵 Calling Perplexity API with model 'sonar'...")
+            response = client.chat.completions.create(
+                model="sonar",  # Perplexity's online search model
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that searches for real, current news. You MUST return the response in valid JSON format."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                # response_format={"type": "json_object"}, # Perplexity API issue with this parameter
+                max_tokens=3000
+            )
+            
+            print(f"🔵 Perplexity API responded successfully!")
+            # Parse response
+            content = response.choices[0].message.content
+            
+            # Clean markdown code blocks if present
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0].strip()
+            
+            result = json.loads(content)
+            news_items = result.get("news_items", [])
+            
+            # Add source_type to each item
+            for item in news_items:
+                item["source_type"] = "perplexity"
+            
+            print(f"🔵 ✅ Parsed {len(news_items)} news items from Perplexity")
+            logger.info(f"Fetched {len(news_items)} real-time news items from Perplexity for {account.name}")
+            return news_items
+            
+        except Exception as e:
+            print(f"\n{'='*80}")
+            print(f"🔴 PERPLEXITY ERROR for {account.name}")
+            print(f"🔴 Error type: {type(e).__name__}")
+            print(f"🔴 Error message: {str(e)}")
+            print(f"{'='*80}\n")
+            
+            logger.error(f"Error fetching Perplexity news: {str(e)}")
+            logger.error(traceback.format_exc())
+            # Fallback to OpenAI on error
+            logger.info("Falling back to OpenAI due to Perplexity error")
+            return await self._fetch_news_from_openai_legacy(account)
+    
+    def _build_perplexity_news_prompt(self, account: Account) -> str:
+        """Build prompt for Perplexity to search real-time news"""
+        from datetime import datetime, timedelta
+        
+        company_name = account.name
+        industry = account.industry or "tecnologia"
+        today = datetime.utcnow()
+        thirty_days_ago = today - timedelta(days=30)
+        
+        date_str = today.strftime("%B %Y")
+        
+        prompt = f"""Search for REAL NEWS articles published in the last 30 days (since {thirty_days_ago.strftime("%Y-%m-%d")}) about:
+
+**Company**: {company_name}
+**Industry**: {industry}
+**Current Date**: {today.strftime("%Y-%m-%d")}
+
+Find 3-8 recent news articles in any of these categories:
+
+1. **Company News** about {company_name}:
+   - Product launches, partnerships, funding
+   - Executive changes, M&A activity
+   - Financial results or announcements
+
+2. **Industry News** in {industry}:
+   - Market trends and analysis
+   - Regulatory changes
+   - Technology developments
+
+3. **Insights for CSM**:
+   - How these news affect customer relationship
+   - Growth or churn risk signals
+   - Expansion opportunities
+
+CRITICAL: 
+- Return ONLY news with REAL, VERIFIABLE published dates from the last 30 days
+- Include the SOURCE NAME (e.g., CNN, Globo, TechCrunch) and ARTICLE URL for EACH news item
+- Do not invent news - if no recent news exists for {company_name}, focus on {industry} news
+
+Return in JSON format:
+{{
+  "news_items": [
+    {{
+      "title": "Exact news headline",
+      "summary": "2-3 sentence summary",
+      "content": "Detailed description with facts",
+      "news_type": "company|industry|market",
+      "category": "financeiro|negocios|tecnologia|regulatorio|pessoas|outro",
+      "relevance_score": 85,
+      "published_date": "2025-11-28T10:00:00Z",
+      "source_name": "CNN Business",
+      "source_url": "https://example.com/article",
+      "insights": "CSM-focused business insights"
+    }}
+  ]
+}}
+
+Prioritize quality and recency. If no recent company news exist, focus on industry/market news."""
+        
+        return prompt
+    
     def _build_news_prompt(self, account: Account) -> str:
         """Build prompt for OpenAI to fetch news"""
         company_name = account.name
         industry = account.industry or "tecnologia"
         
-        prompt = f"""Busque notícias recentes e relevantes para um Customer Success Manager (CSM) sobre:
+        # Get current date for context
+        from datetime import datetime
+        today = datetime.utcnow()
+        current_date_str = today.strftime("%d de %B de %Y")
+        
+        prompt = f"""Data atual: {current_date_str}
+
+Busque notícias recentes e relevantes para um Customer Success Manager (CSM) sobre:
 
 **Empresa do Cliente:** {company_name}
 **Setor/Indústria:** {industry}
 
-Por favor, retorne notícias dos últimos 30 dias que sejam relevantes para o CSM entender melhor o contexto de negócio do cliente. Inclua:
+IMPORTANTE: Retorne notícias dos ÚLTIMOS 30 DIAS (novembro-dezembro de 2025) que sejam relevantes para o CSM entender melhor o contexto de negócio do cliente. As datas devem ser RECENTES (últimos 30 dias).
+
+Inclua:
 
 1. **Notícias diretas sobre a empresa** ({company_name})
    - Anúncios corporativos, financeiros, novos produtos
@@ -172,8 +376,10 @@ Para cada notícia, forneça:
 - **news_type**: "company" (sobre a empresa), "industry" (sobre o setor), ou "market" (mercado geral)
 - **category**: "financeiro", "negocios", "tecnologia", "regulatorio", "pessoas", ou "outro"
 - **relevance_score**: 0-100 (quão relevante é para o CSM)
-- **published_date**: Data aproximada (formato ISO 8601)
+- **published_date**: Data RECENTE dos últimos 30 dias (formato ISO 8601: YYYY-MM-DDTHH:MM:SSZ)
 - **insights**: String com insights de negócio para o CSM
+
+CRÍTICO: As datas (published_date) devem ser dos ÚLTIMOS 30 DIAS, não de 2023 ou anos anteriores.
 
 IMPORTANTE: Retorne no formato JSON com a estrutura:
 {{
@@ -185,7 +391,7 @@ IMPORTANTE: Retorne no formato JSON com a estrutura:
       "news_type": "company|industry|market",
       "category": "financeiro|negocios|tecnologia|regulatorio|pessoas|outro",
       "relevance_score": 85,
-      "published_date": "2025-11-27T10:00:00Z",
+      "published_date": "2025-11-{today.day:02d}T10:00:00Z",
       "insights": "Este evento pode abrir oportunidade de upsell..."
     }}
   ]
@@ -231,10 +437,14 @@ Mantenha um tom profissional e consultivo."""
                 content=item.get("content", ""),
                 news_type=item.get("news_type", "market"),
                 category=item.get("category", "outro"),
-                source_type="openai",
+                source_type=item.get("source_type", "openai"),
                 relevance_score=item.get("relevance_score", 50),
                 published_date=datetime.fromisoformat(item.get("published_date", datetime.utcnow().isoformat()).replace("Z", "+00:00")),
-                news_metadata={"insights": item.get("insights", "")}
+                news_metadata={
+                    "insights": item.get("insights", ""),
+                    "source_name": item.get("source_name"),
+                    "source_url": item.get("source_url")
+                }
             )
             self.db.add(news_item)
         

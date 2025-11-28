@@ -24,24 +24,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { usePendencies, PendingItem } from '@/hooks/usePendencies';
-import { useTeamContext } from '@/contexts/TeamContext';
+import CSMFilter from '@/components/CSMFilter';
 
 export default function Pendencies() {
-    const { getTeam } = useTeamContext();
-    const team = getTeam('default');
-    const csms = team?.members || [];
-
     const [selectedCSM, setSelectedCSM] = useState<string>('all');
     const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
@@ -121,20 +110,7 @@ export default function Pendencies() {
                             </p>
                             {/* CSM Filter */}
                             <div className="flex items-center gap-3 mt-4">
-                                <Users className="w-4 h-4 text-muted-foreground" />
-                                <Select value={selectedCSM} onValueChange={setSelectedCSM}>
-                                    <SelectTrigger className="w-[200px]">
-                                        <SelectValue placeholder="Todos os CSMs" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos os CSMs</SelectItem>
-                                        {csms.map(csm => (
-                                            <SelectItem key={csm.id} value={csm.name}>
-                                                {csm.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />
                             </div>
                         </div>
                     </div>

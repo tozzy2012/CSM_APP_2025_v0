@@ -20,6 +20,7 @@ import {
   Newspaper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -119,6 +120,7 @@ function NavMenuItem({ item, location }: { item: NavItem; location: string }) {
               const ChildIcon = child.icon;
               const isChildActive = location === child.path || location.startsWith(child.path + "/");
               const isPendencies = child.path === "/pendencies";
+              const isRadarCS = child.path === "/radar-cs";
 
               return (
                 <Link key={child.path} href={child.path}>
@@ -130,6 +132,11 @@ function NavMenuItem({ item, location }: { item: NavItem; location: string }) {
                   >
                     <ChildIcon className="w-4 h-4" />
                     <span className="font-medium text-sm">{child.label}</span>
+                    {isRadarCS && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        WIP
+                      </Badge>
+                    )}
                   </a>
                 </Link>
               );

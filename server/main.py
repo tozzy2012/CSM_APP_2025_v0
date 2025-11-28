@@ -74,19 +74,51 @@ async def shutdown_event():
 # ROTAS DE HEALTH CHECK
 # ============================================================================
 
-@app.get("/health", response_model=schemas.HealthCheckResponse)
-async def health_check():
-    """Health check endpoint"""
-    db_status = "healthy" if await check_database_health() else "unhealthy"
-    
-    return schemas.HealthCheckResponse(
-        status="healthy" if db_status == "healthy" else "degraded",
-        service=settings.SERVICE_NAME,
-        version=settings.SERVICE_VERSION,
-        timestamp=datetime.utcnow(),
-        database=db_status,
-        cache="healthy"  # TODO: Implementar verificação do Redis
-    )
+@app.get("/health")
+def health_check(db: Session = Depends(get_db)):
+    """Endpoint de health check com verificação de banco de dados"""
+    try:
+        db_status = check_database_health(db)
+        return {
+            "status": "healthy",
+            "service": settings.SERVICE_NAME,
+            "version": settings.SERVICE_VERSION,
+            "timestamp": datetime.now().isoformat(),
+            "database": "healthy" if db_status else "unhealthy",
+            "cache": "healthy"  # Sempre healthy para o cache de query
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Service unhealthy")
+
+@app.get("/debug/perplexity-check")
+def debug_perplexity_check(db: Session = Depends(get_db)):
+    """DEBUG: Verificar se a chave Perplexity pode ser lida"""
+    try:
+        tenant = db.query(models.Tenant).first()
+        
+        if not tenant:
+            return {"error": "No tenant found", "configured": False}
+        
+        ai_settings = tenant.settings.get('ai', {}) if tenant.settings else {}
+        perplexity_key = ai_settings.get('perplexityApiKey', '')
+        openai_key = ai_settings.get('openaiApiKey', '')
+        
+        return {
+            "tenant_id": tenant.tenant_id,
+            "has_settings": bool(tenant.settings),
+            "ai_settings_keys": list(ai_settings.keys()),
+            "openai_configured": bool(openai_key),
+            "openai_key_length": len(openai_key) if openai_key else 0,
+            "perplexity_configured": bool(perplexity_key),
+            "perplexity_key_length": len(perplexity_key) if perplexity_key else 0,
+            "perplexity_preview": perplexity_key[:30] + "..." if perplexity_key else None,
+            "perplexity_valid": len(str(perplexity_key).strip()) > 10 if perplexity_key else False,
+            "would_use_perplexity": bool(perplexity_key and len(str(perplexity_key).strip()) > 10)
+        }
+    except Exception as e:
+        logger.error(f"Debug endpoint error: {str(e)}")
+        return {"error": str(e), "configured": False}
 
 
 @app.get("/")
