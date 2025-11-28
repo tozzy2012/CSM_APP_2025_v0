@@ -460,6 +460,29 @@ class TaskResponse(TaskBase):
     )
 
 # ============================================================================
+# USER SCHEMAS
+# ============================================================================
+
+class UserBase(BaseModel):
+    """Schema base para User"""
+    email: EmailStr
+    name: str
+    active: bool = True
+    avatar_url: Optional[str] = Field(None, alias="avatarUrl")
+    
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class UserResponse(UserBase):
+    """Schema de resposta para User"""
+    id: str
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
+    
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+
+# ============================================================================
 # SSO AUTHENTICATION SCHEMAS
 # ============================================================================
 

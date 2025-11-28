@@ -4,7 +4,7 @@ from sqlalchemy import text, select, select
 Microsserviço de CRM - FastAPI Application
 """
 from fastapi import FastAPI
-from fastapi import Depends, HTTPException, status, Query
+from fastapi import Depends, HTTPException, status, Query, UploadFile, File
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -12,6 +12,12 @@ from uuid import UUID
 from datetime import datetime, timedelta
 import logging
 import traceback
+import csv
+import io
+import codecs
+import codecs
+from fastapi.responses import StreamingResponse
+import pandas as pd
 
 from config import settings
 from database import get_db, check_database_health, init_db
@@ -92,6 +98,33 @@ async def root():
         "status": "running"
     }
 
+
+
+# ============================================================================
+# ROTAS DE USERS
+# ============================================================================
+
+@app.get(
+    f"{settings.API_PREFIX}/users",
+    response_model=List[schemas.UserResponse],
+    summary="Listar Usuários",
+    description="Lista todos os usuários cadastrados"
+)
+async def list_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """Lista todos os usuários"""
+    try:
+        users = db.query(models.User).offset(skip).limit(limit).all()
+        return users
+    except Exception as e:
+        logger.error(f"Erro ao listar usuários: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao listar usuários: {str(e)}"
+        )
 
 
 # ============================================================================
@@ -535,6 +568,204 @@ async def delete_client(
         )
 
 
+
+# ============================================================================
+# ROTAS DE IMPORTAÇÃO DE CLIENTES
+# ============================================================================
+
+@app.get(
+    f"{settings.API_PREFIX}/clients/import/template",
+    summary="Download Template de Importação",
+    description="Retorna um arquivo Excel modelo para importação de clientes"
+)
+async def get_clients_import_template():
+    """Retorna template Excel para importação de clientes"""
+    headers = [
+        "name", "legal_name", "cnpj", "industry", 
+        "website", "company_size", "notes", "tags"
+    ]
+    
+    # Criar DataFrame com exemplo
+    df = pd.DataFrame([{
+        "name": "Empresa Exemplo Ltda",
+        "legal_name": "Razão Social Exemplo",
+        "cnpj": "12.345.678/0001-90",
+        "industry": "Tecnologia",
+        "website": "https://exemplo.com.br",
+        "company_size": "medium",
+        "notes": "Cliente estratégico",
+        "tags": "tech,saas,prioridade"
+    }], columns=headers)
+    
+    # Salvar em buffer de memória
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+    
+    output.seek(0)
+    
+    response = StreamingResponse(
+        iter([output.getvalue()]), 
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    
+    response.headers["Content-Disposition"] = "attachment; filename=template_clientes.xlsx"
+    
+    return response
+
+
+@app.post(
+    f"{settings.API_PREFIX}/clients/import",
+    summary="Importar Clientes via CSV",
+    description="Importa clientes a partir de um arquivo CSV"
+)
+async def import_clients(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Importa clientes via CSV ou Excel"""
+    filename = file.filename.lower()
+    
+    try:
+        if filename.endswith('.csv'):
+            # Ler conteúdo do arquivo
+            content = await file.read()
+            
+            # Decodificar conteúdo
+            decoded_content = None
+            for encoding in ['utf-8-sig', 'utf-8', 'latin-1']:
+                try:
+                    decoded_content = content.decode(encoding)
+                    break
+                except UnicodeDecodeError:
+                    continue
+                    
+            if decoded_content is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Codificação do arquivo não suportada."
+                )
+                
+            # Detectar delimitador
+            try:
+                dialect = csv.Sniffer().sniff(decoded_content[:1024], delimiters=";,")
+                delimiter = dialect.delimiter
+            except:
+                delimiter = ';' # Fallback
+                
+            # Ler CSV para lista de dicts
+            csv_reader = csv.DictReader(io.StringIO(decoded_content), delimiter=delimiter)
+            data_rows = list(csv_reader)
+            fieldnames = csv_reader.fieldnames
+            
+        elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+            # Ler Excel
+            content = await file.read()
+            df = pd.read_excel(io.BytesIO(content))
+            
+            # Converter NaN para string vazia ou None
+            df = df.fillna("")
+            
+            # Converter para lista de dicts
+            data_rows = df.to_dict('records')
+            fieldnames = list(df.columns)
+            
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Arquivo deve ser CSV ou Excel (.xlsx)"
+            )
+        
+        # Verificar headers (normalizando para lowercase e strip)
+        if not fieldnames:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Arquivo vazio ou inválido"
+            )
+            
+        # Normalizar headers do arquivo para comparação
+        file_headers = [str(h).strip().lower() for h in fieldnames]
+        required_fields = ["name", "legal_name", "cnpj"]
+        
+        missing_fields = [field for field in required_fields if field not in file_headers]
+        
+        if missing_fields:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Campos obrigatórios ausentes: {', '.join(missing_fields)}"
+            )
+        
+        results = {
+            "success": 0,
+            "errors": 0,
+            "duplicates": 0,
+            "details": []
+        }
+        
+        from uuid import uuid4
+        
+        for row_num, row in enumerate(data_rows, start=2):
+            try:
+                # Normalizar chaves da linha para lowercase
+                row_normalized = {str(k).strip().lower(): v for k, v in row.items() if k}
+                
+                # Validar dados básicos
+                if not row_normalized.get("name") or not row_normalized.get("cnpj"):
+                    results["errors"] += 1
+                    results["details"].append(f"Linha {row_num}: Nome ou CNPJ ausente")
+                    continue
+                
+                # Limpar CNPJ (apenas números)
+                cnpj_clean = ''.join(filter(str.isdigit, row_normalized.get("cnpj", "")))
+                
+                # Verificar duplicidade
+                existing_client = db.query(models.Client).filter(
+                    models.Client.cnpj.like(f"%{cnpj_clean}%")
+                ).first()
+                
+                if existing_client:
+                    results["duplicates"] += 1
+                    results["details"].append(f"Linha {row_num}: CNPJ {row_normalized.get('cnpj')} já existe (Cliente: {existing_client.name})")
+                    continue
+                
+                # Processar tags
+                tags_str = row_normalized.get("tags", "")
+                tags_list = [t.strip() for t in tags_str.split(",")] if tags_str else []
+                
+                # Criar cliente
+                new_client = models.Client(
+                    id=str(uuid4()),
+                    name=row_normalized.get("name"),
+                    legal_name=row_normalized.get("legal_name", row_normalized.get("name")),
+                    cnpj=row_normalized.get("cnpj"),
+                    industry=row_normalized.get("industry"),
+                    website=row_normalized.get("website"),
+                    company_size=row_normalized.get("company_size", "small"),
+                    notes=row_normalized.get("notes"),
+                    tags=tags_list,
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                
+                db.add(new_client)
+                results["success"] += 1
+                
+            except Exception as e:
+                results["errors"] += 1
+                results["details"].append(f"Linha {row_num}: Erro ao processar - {str(e)}")
+        
+        db.commit()
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro na importação de clientes: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno ao processar arquivo: {str(e)}"
+        )
 
 
 # ============================================================================

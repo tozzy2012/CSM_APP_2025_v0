@@ -11,6 +11,7 @@ interface ClientsContextType {
   deleteClient: (id: string) => Promise<void>;
   getClientById: (id: string) => Client | undefined;
   getClientByCNPJ: (cnpj: string) => Client | undefined;
+  refetch: () => Promise<void>;
 }
 
 const ClientsContext = createContext<ClientsContextType | undefined>(undefined);

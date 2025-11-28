@@ -30,8 +30,14 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from '@/components/ui/accordion';
 
-import { useTeamContext } from '@/contexts/TeamContext';
+import CSMFilter from '@/components/CSMFilter';
 
 interface NewsItem {
     id: string;
@@ -61,10 +67,6 @@ interface AccountNews {
 }
 
 export default function RadarCS() {
-    const { getTeam } = useTeamContext();
-    const team = getTeam('default');
-    const csms = team?.members || [];
-
     const [selectedCSM, setSelectedCSM] = useState<string>('all');
     const [selectedMarket, setSelectedMarket] = useState<string>('all');
     const [selectedAccount, setSelectedAccount] = useState<string>('all');
@@ -82,7 +84,35 @@ export default function RadarCS() {
             if (!response.ok) throw new Error('Failed to fetch news');
 
             const data = await response.json();
-            setAccountsNews(data.items || []);
+
+            // Transform snake_case API response to camelCase for frontend
+            const transformedItems = (data.items || []).map((item: any) => ({
+                account: {
+                    id: item.account.id,
+                    name: item.account.name,
+                    industry: item.account.industry,
+                    csm: item.account.csm,
+                    healthScore: item.account.health_score,
+                    status: item.account.status,
+                },
+                newsItems: (item.news_items || []).map((news: any) => ({
+                    id: news.id,
+                    accountId: news.account_id,
+                    title: news.title,
+                    summary: news.summary,
+                    content: news.content,
+                    newsType: news.news_type,
+                    category: news.category,
+                    sourceType: news.source_type,
+                    relevanceScore: news.relevance_score,
+                    publishedDate: news.published_date,
+                    insights: news.insights,
+                    createdAt: news.created_at,
+                })),
+                totalNews: item.total_news,
+            }));
+
+            setAccountsNews(transformedItems);
         } catch (error) {
             console.error('Error fetching news:', error);
             toast.error('Erro ao carregar notícias');
@@ -95,21 +125,79 @@ export default function RadarCS() {
     const refreshAccountNews = async (accountId: string) => {
         try {
             setRefreshing(true);
-            const response = await fetch(`/api/v1/news/refresh/${accountId}`, {
+            const response = await fetch(`/api/v1/news/refresh/${accountId}?force=true`, {
                 method: 'POST',
             });
 
-            if (!response.ok) throw new Error('Failed to refresh news');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: 'Erro desconhecido' }));
+                throw new Error(errorData.detail || 'Failed to refresh news');
+            }
 
-            toast.success('Notícias atualizadas com sucesso!');
+            const result = await response.json();
+            toast.success(`${result.news_count} notícias encontradas!`);
             await fetchNews(selectedCSM);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error refreshing news:', error);
+            toast.error(error.message || 'Erro ao atualizar notícias. Verifique se a chave OpenAI está configurada em Settings > AI.');
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
+    // Refresh news for all visible accounts
+    const refreshAllNews = async () => {
+        if (accountsNews.length === 0) {
+            toast.error('Nenhum account disponível para atualizar');
+            return;
+        }
+
+        try {
+            setRefreshing(true);
+            let totalNewsFound = 0;
+            let successCount = 0;
+            let errorCount = 0;
+
+            toast.info(`Buscando notícias para ${accountsNews.length} accounts...`);
+
+            // Refresh each account sequentially to avoid overloading the API
+            for (const { account } of accountsNews) {
+                try {
+                    const response = await fetch(`/api/v1/news/refresh/${account.id}?force=true`, {
+                        method: 'POST',
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        totalNewsFound += result.news_count || 0;
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (error) {
+                    console.error(`Error refreshing account ${account.name}:`, error);
+                    errorCount++;
+                }
+            }
+
+            // Show results
+            if (successCount > 0) {
+                toast.success(`✅ ${totalNewsFound} notícias encontradas para ${successCount} accounts!`);
+            }
+            if (errorCount > 0) {
+                toast.warning(`⚠️ ${errorCount} accounts falharam ao atualizar`);
+            }
+
+            // Reload the news list
+            await fetchNews(selectedCSM);
+        } catch (error: any) {
+            console.error('Error refreshing all news:', error);
             toast.error('Erro ao atualizar notícias');
         } finally {
             setRefreshing(false);
         }
     };
+
 
     useEffect(() => {
         fetchNews(selectedCSM);
@@ -179,22 +267,7 @@ export default function RadarCS() {
                             {/* Filters */}
                             <div className="flex flex-wrap items-center gap-6 mt-4">
                                 {/* CSM Filter */}
-                                <div className="flex items-center gap-2">
-                                    <label className="text-sm font-medium text-muted-foreground">CSM:</label>
-                                    <Select value={selectedCSM} onValueChange={setSelectedCSM}>
-                                        <SelectTrigger className="w-[180px]">
-                                            <SelectValue placeholder="Todos" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Todos</SelectItem>
-                                            {csms.map((csm: any) => (
-                                                <SelectItem key={csm.id} value={csm.name}>
-                                                    {csm.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />
 
                                 {/* Market Filter */}
                                 <div className="flex items-center gap-2">
@@ -229,6 +302,19 @@ export default function RadarCS() {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                            </div>
+
+                            {/* Global Reload Button */}
+                            <div className="mt-4">
+                                <Button
+                                    onClick={refreshAllNews}
+                                    disabled={loading || refreshing}
+                                    variant="default"
+                                    size="sm"
+                                >
+                                    <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                                    {refreshing ? 'Atualizando...' : 'Recarregar Notícias'}
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -359,8 +445,7 @@ export default function RadarCS() {
                     </Card>
                 ) : (
                     <div className="space-y-6">
-                        {accountsNews.map(({ account, news_items }: any) => {
-                            const newsItems = news_items; // Alias for compatibility
+                        {accountsNews.map(({ account, newsItems }: any) => {
                             return (
                                 <Card key={account.id} className="hover:shadow-lg transition-all duration-200">
                                     <CardHeader className="pb-4">
@@ -422,77 +507,93 @@ export default function RadarCS() {
                                         </div>
                                     </CardHeader>
 
-                                    <Separator />
-
                                     <CardContent className="pt-6">
-                                        <div className="space-y-4">
-                                            {newsItems?.map((news: any) => {
-                                                const TypeIcon = getNewsTypeIcon(news.newsType);
-                                                return (
-                                                    <div
-                                                        key={news.id}
-                                                        className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                                                    >
-                                                        {/* News Header */}
-                                                        <div className="flex items-start gap-3 mb-3">
-                                                            <div className={`p-2 rounded-md ${getNewsTypeColor(news.newsType)}`}>
-                                                                <TypeIcon className="w-4 h-4" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <div className="flex items-start justify-between gap-4 mb-2">
-                                                                    <h4 className="font-semibold text-base leading-tight">
-                                                                        {news.title}
-                                                                    </h4>
-                                                                    <div className="flex items-center gap-2 shrink-0">
-                                                                        <Badge variant="outline" className={getCategoryColor(news.category)}>
-                                                                            {news.category}
-                                                                        </Badge>
-                                                                        <Badge variant="secondary" className="text-xs">
-                                                                            {news.relevanceScore}/100
-                                                                        </Badge>
-                                                                    </div>
-                                                                </div>
-                                                                <p className="text-sm text-muted-foreground mb-3">
-                                                                    {news.summary}
-                                                                </p>
-
-                                                                {/* Insights */}
-                                                                {news.insights && (
-                                                                    <div className="p-3 rounded-md bg-primary/5 border border-primary/10">
-                                                                        <div className="flex items-start gap-2">
-                                                                            <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                                                                            <div>
-                                                                                <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1">
-                                                                                    Insights para CS
+                                        {newsItems && newsItems.length > 0 ? (
+                                            <Accordion type="single" collapsible className="w-full">
+                                                <AccordionItem value="news" className="border-0">
+                                                    <AccordionTrigger className="hover:no-underline py-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Newspaper className="w-4 h-4 text-primary" />
+                                                            <span className="font-semibold">Ver {newsItems.length} notícia{newsItems.length > 1 ? 's' : ''}</span>
+                                                        </div>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent>
+                                                        <div className="space-y-4 pt-4">
+                                                            {newsItems.map((news: any) => {
+                                                                const TypeIcon = getNewsTypeIcon(news.newsType);
+                                                                return (
+                                                                    <div
+                                                                        key={news.id}
+                                                                        className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                                                                    >
+                                                                        {/* News Header */}
+                                                                        <div className="flex items-start gap-3 mb-3">
+                                                                            <div className={`p-2 rounded-md ${getNewsTypeColor(news.newsType)}`}>
+                                                                                <TypeIcon className="w-4 h-4" />
+                                                                            </div>
+                                                                            <div className="flex-1">
+                                                                                <div className="flex items-start justify-between gap-4 mb-2">
+                                                                                    <h4 className="font-semibold text-base leading-tight">
+                                                                                        {news.title}
+                                                                                    </h4>
+                                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                                        <Badge variant="outline" className={getCategoryColor(news.category)}>
+                                                                                            {news.category}
+                                                                                        </Badge>
+                                                                                        <Badge variant="secondary" className="text-xs">
+                                                                                            {news.relevanceScore}/100
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <p className="text-sm text-muted-foreground mb-3">
+                                                                                    {news.summary}
                                                                                 </p>
-                                                                                <p className="text-sm">{news.insights}</p>
+
+                                                                                {/* Insights */}
+                                                                                {news.insights && (
+                                                                                    <div className="p-3 rounded-md bg-primary/5 border border-primary/10">
+                                                                                        <div className="flex items-start gap-2">
+                                                                                            <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                                                                                            <div>
+                                                                                                <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1">
+                                                                                                    Insights para CS
+                                                                                                </p>
+                                                                                                <p className="text-sm">{news.insights}</p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+
+                                                                                {/* News Footer */}
+                                                                                <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                                                                                    {news.publishedDate && (
+                                                                                        <div className="flex items-center gap-1">
+                                                                                            <Calendar className="w-3 h-3" />
+                                                                                            <span>
+                                                                                                {new Date(news.publishedDate).toLocaleDateString('pt-BR')}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    )}
+                                                                                    <span>•</span>
+                                                                                    <div className="flex items-center gap-1">
+                                                                                        <Tag className="w-3 h-3" />
+                                                                                        <span className="capitalize">{news.newsType}</span>
+                                                                                    </div>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                )}
-
-                                                                {/* News Footer */}
-                                                                <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                                                                    {news.publishedDate && (
-                                                                        <div className="flex items-center gap-1">
-                                                                            <Calendar className="w-3 h-3" />
-                                                                            <span>
-                                                                                {new Date(news.publishedDate).toLocaleDateString('pt-BR')}
-                                                                            </span>
-                                                                        </div>
-                                                                    )}
-                                                                    <span>•</span>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <Tag className="w-3 h-3" />
-                                                                        <span className="capitalize">{news.newsType}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                                );
+                                                            })}
                                                         </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            </Accordion>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground text-center py-4">
+                                                Nenhuma notícia disponível
+                                            </p>
+                                        )}
                                     </CardContent>
                                 </Card>
                             );
@@ -500,6 +601,6 @@ export default function RadarCS() {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

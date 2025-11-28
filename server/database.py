@@ -69,6 +69,22 @@ def init_db():
     Inicializar banco de dados (criar tabelas se não existirem)
     Nota: Em produção, use migrations (Alembic) ao invés disso
     """
-    from models import Base
-    Base.metadata.create_all(bind=engine)
-    logger.info("Banco de dados inicializado")
+    import time
+    from sqlalchemy.exc import OperationalError
+    
+    max_retries = 5
+    retry_delay = 5
+    
+    for attempt in range(max_retries):
+        try:
+            from models import Base
+            Base.metadata.create_all(bind=engine)
+            logger.info("Banco de dados inicializado")
+            return
+        except OperationalError as e:
+            if attempt < max_retries - 1:
+                logger.warning(f"Tentativa {attempt + 1}/{max_retries} falhou: {e}. Tentando novamente em {retry_delay}s...")
+                time.sleep(retry_delay)
+            else:
+                logger.error(f"Falha ao inicializar banco de dados após {max_retries} tentativas.")
+                raise e

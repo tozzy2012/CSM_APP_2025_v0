@@ -1,4 +1,5 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import { apiClient } from "../api";
 
 export interface CSM {
   id: string;
@@ -32,30 +33,6 @@ interface TeamContextType {
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
 
-const INITIAL_CSMS: CSM[] = [
-  {
-    id: "1",
-    name: "João Silva",
-    email: "joao@example.com",
-    role: "Senior CSM",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "2",
-    name: "Maria Santos",
-    email: "maria@example.com",
-    role: "CSM",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "3",
-    name: "Pedro Costa",
-    email: "pedro@example.com",
-    role: "CSM",
-    createdAt: new Date().toISOString()
-  },
-];
-
 const INITIAL_TEAMS: Team[] = [
   {
     id: "1",
@@ -81,20 +58,48 @@ const INITIAL_TEAMS: Team[] = [
 ];
 
 export function TeamProvider({ children }: { children: ReactNode }) {
-  const [csms, setCSMs] = useState<CSM[]>(() => {
-    const saved = localStorage.getItem("team_csms");
-    return saved ? JSON.parse(saved) : INITIAL_CSMS;
-  });
+  const [csms, setCSMs] = useState<CSM[]>([]);
+
+  // Debug: Log when provider mounts
+  useEffect(() => {
+    console.log("TeamProvider mounted - clearing legacy storage");
+    localStorage.removeItem("team_csms");
+  }, []);
 
   const [teams, setTeams] = useState<Team[]>(() => {
     const saved = localStorage.getItem("team_teams");
     return saved ? JSON.parse(saved) : INITIAL_TEAMS;
   });
 
-  // Persist to localStorage whenever data changes
+  // Fetch users from API
   useEffect(() => {
-    localStorage.setItem("team_csms", JSON.stringify(csms));
-  }, [csms]);
+    const fetchUsers = async () => {
+      try {
+        console.log("Fetching users from API...");
+        const users = await apiClient.get<any[]>("/api/v1/users");
+        console.log("Users fetched:", users);
+        const mappedCSMs: CSM[] = users.map(user => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatarUrl,
+          role: "CSM", // Default role for now
+          createdAt: user.createdAt
+        }));
+        setCSMs(mappedCSMs);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Persist to localStorage whenever data changes
+  // Note: We don't persist csms anymore as they come from API
+  // useEffect(() => {
+  //   localStorage.setItem("team_csms", JSON.stringify(csms));
+  // }, [csms]);
 
   useEffect(() => {
     localStorage.setItem("team_teams", JSON.stringify(teams));
@@ -104,6 +109,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const getTeam = (id: string) => teams.find((team) => team.id === id);
 
   const addCSM = (csmData: Omit<CSM, "id" | "createdAt">) => {
+    // TODO: Implement API call to create user
     const newCSM: CSM = {
       ...csmData,
       id: Date.now().toString(),

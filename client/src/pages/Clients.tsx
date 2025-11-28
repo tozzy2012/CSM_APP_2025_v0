@@ -41,7 +41,7 @@ import EditClientDialog from "@/components/EditClientDialog";
 import ImportClientsDialog from "@/components/ImportClientsDialog";
 
 export default function Clients() {
-  const { clients, deleteClient, addClient, error, loading } = useClientsContext();
+  const { clients, deleteClient, addClient, error, loading, refetch } = useClientsContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [, setLocation] = useLocation();
 
@@ -319,9 +319,8 @@ export default function Clients() {
       <ImportClientsDialog
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
-        onImport={(importedClients) => {
-          importedClients.forEach((client) => addClient(client as any));
-          toast.success(`${importedClients.length} clientes importados!`);
+        onImported={() => {
+          refetch();
         }}
       />
 
