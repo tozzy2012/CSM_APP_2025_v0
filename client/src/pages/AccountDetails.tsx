@@ -239,54 +239,54 @@ export default function AccountDetails() {
           {/* LEFT COLUMN - Main Content (2/3) */}
           <div className="lg:col-span-2 space-y-8">
 
-            {/* Account Intelligence Section */}
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <ActivityIcon className="w-5 h-5 text-primary" />
-                  Account Intelligence
-                </h2>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                  AI Powered
-                </Badge>
-              </div>
-              <AccountInsights accountId={accountId} />
-            </section>
-
-            {/* Tabs Section */}
+            {/* Tabs Section - Now wrapping everything */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent gap-6">
+              <TabsList className="w-full justify-start bg-blue-100/80 dark:bg-blue-900/40 p-1.5 rounded-xl gap-2 h-auto mb-8 border border-blue-200 dark:border-blue-800 shadow-sm">
                 <TabsTrigger
                   value="overview"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+                  className="rounded-lg px-4 py-2.5 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all hover:bg-blue-200/50 dark:hover:bg-blue-800/50"
                 >
                   Visão Geral
                 </TabsTrigger>
                 <TabsTrigger
                   value="activities"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+                  className="rounded-lg px-4 py-2.5 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all hover:bg-blue-200/50 dark:hover:bg-blue-800/50"
                 >
-                  Atividades <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">{accountActivities.length}</Badge>
+                  Atividades <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-blue-200/50 text-blue-700 group-data-[state=active]:bg-blue-50 group-data-[state=active]:text-blue-700">{accountActivities.length}</Badge>
                 </TabsTrigger>
                 <TabsTrigger
                   value="tasks"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+                  className="rounded-lg px-4 py-2.5 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all hover:bg-blue-200/50 dark:hover:bg-blue-800/50"
                 >
-                  Tarefas <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">{accountTasks.length}</Badge>
+                  Tarefas <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs bg-blue-200/50 text-blue-700 group-data-[state=active]:bg-blue-50 group-data-[state=active]:text-blue-700">{accountTasks.length}</Badge>
                 </TabsTrigger>
                 <TabsTrigger
                   value="onboarding"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+                  className="rounded-lg px-4 py-2.5 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all hover:bg-blue-200/50 dark:hover:bg-blue-800/50"
                 >
                   Onboarding
                 </TabsTrigger>
                 <TabsTrigger
                   value="health"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3"
+                  className="rounded-lg px-4 py-2.5 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all hover:bg-blue-200/50 dark:hover:bg-blue-800/50"
                 >
                   Health Score
                 </TabsTrigger>
               </TabsList>
+
+              {/* Account Intelligence Section */}
+              <section className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <ActivityIcon className="w-5 h-5 text-primary" />
+                    Account Intelligence
+                  </h2>
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                    AI Powered
+                  </Badge>
+                </div>
+                <AccountInsights accountId={accountId} />
+              </section>
 
               <div className="mt-6">
                 {/* OVERVIEW TAB - Premium Redesign */}
@@ -830,14 +830,14 @@ export default function AccountDetails() {
                       <Badge
                         variant="outline"
                         className={`font-medium capitalize ${{
-                            "Saudável": "bg-green-100 text-green-700 border-green-200",
-                            "Atenção": "bg-yellow-100 text-yellow-700 border-yellow-200",
-                            "Crítico": "bg-red-100 text-red-700 border-red-200",
-                            "Salvamento": "bg-orange-100 text-orange-700 border-orange-200",
-                            "Upsell": "bg-blue-100 text-blue-700 border-blue-200",
-                            "Churn": "bg-gray-100 text-gray-700 border-gray-200",
-                            "Inadimplente": "bg-purple-100 text-purple-700 border-purple-200",
-                          }[account.status || ""] || "bg-gray-100 text-gray-700 border-gray-200"
+                          "Saudável": "bg-green-100 text-green-700 border-green-200",
+                          "Atenção": "bg-yellow-100 text-yellow-700 border-yellow-200",
+                          "Crítico": "bg-red-100 text-red-700 border-red-200",
+                          "Salvamento": "bg-orange-100 text-orange-700 border-orange-200",
+                          "Upsell": "bg-blue-100 text-blue-700 border-blue-200",
+                          "Churn": "bg-gray-100 text-gray-700 border-gray-200",
+                          "Inadimplente": "bg-purple-100 text-purple-700 border-purple-200",
+                        }[account.status || ""] || "bg-gray-100 text-gray-700 border-gray-200"
                           }`}
                       >
                         {account.status || "-"}

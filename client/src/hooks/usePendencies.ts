@@ -130,12 +130,39 @@ function checkHealthScoreEvaluation(account: Account, now: Date): PendingItem | 
     // In production, this should check: last_evaluation_date < 7 days ago
 
     // Placeholder logic - this should be replaced with actual API call
-    const lastUpdateDate = account.updatedAt ? new Date(account.updatedAt) : null;
-    if (!lastUpdateDate) return null;
+    // Handle potential string/number mismatch and snake_case fallback
+    const score = account.healthScore ?? (account as any).health_score;
+    const numericScore = typeof score === 'string' ? parseInt(score, 10) : score;
 
-    const daysSinceUpdate = Math.floor((now.getTime() - lastUpdateDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Check if never evaluated (healthScore === 0) OR default value (75)
+    const isDefaultScore = numericScore === 75 || numericScore === 0 || numericScore === undefined || numericScore === null || Number.isNaN(numericScore);
 
-    if (daysSinceUpdate > 7) {
+    const lastUpdateDate = account.updatedAt ? new Date(account.updatedAt) : (account.createdAt ? new Date(account.createdAt) : null);
+    const daysSinceUpdate = lastUpdateDate ? Math.floor((now.getTime() - lastUpdateDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+    // DEBUG LOG
+    // Log ALL accounts to see what's happening with the new one
+    console.log(`[HealthScore Check] Account: ${account.name} ${JSON.stringify({
+        rawScore: score,
+        numericScore,
+        isDefaultScore,
+        daysSinceUpdate,
+        updatedAt: account.updatedAt,
+        createdAt: account.createdAt
+    })}`);
+
+    // If it has the default score (75 or 0), treat as pending regardless of date
+    if (isDefaultScore) {
+        return {
+            type: 'health_score',
+            urgency: 'red',
+            title: 'Primeira avaliação necessária',
+            description: 'Cliente com Health Score padrão/indefinido',
+            actionUrl: `/accounts/${account.id}?tab=health`,
+        };
+    }
+
+    if (lastUpdateDate && daysSinceUpdate > 7) {
         return {
             type: 'health_score',
             urgency: daysSinceUpdate > 14 ? 'red' : daysSinceUpdate > 10 ? 'orange' : 'yellow',

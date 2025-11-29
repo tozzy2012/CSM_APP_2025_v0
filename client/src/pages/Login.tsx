@@ -186,7 +186,7 @@ export default function Login() {
                 <Input
                   id="email"
                   type="text"
-                  placeholder="admin ou seu@email.com"
+                  placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
@@ -217,13 +217,7 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm font-semibold mb-2">Credenciais de teste:</p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p><strong>Super Admin:</strong> admin / adminadmin</p>
-              <p><strong>Demo Admin:</strong> demo@admin.com / demo123</p>
-            </div>
-          </div>
+
         </CardContent>
       </Card>
     </div>

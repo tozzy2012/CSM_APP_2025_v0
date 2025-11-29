@@ -72,8 +72,12 @@ export function useMetrics(): CSMetrics {
 
         const accountsAtRisk = healthScoreDistribution.attention + healthScoreDistribution.risk + healthScoreDistribution.critical;
 
-        const avgHealthScore = accounts.length > 0
-            ? accounts.reduce((sum, acc) => sum + (acc.healthScore || 0), 0) / accounts.length
+        // Filter out accounts with 0 or null health score for the average calculation
+        const accountsWithScore = accounts.filter(acc => (acc.healthScore || 0) > 0);
+        const totalHealthScore = accountsWithScore.reduce((sum, acc) => sum + (acc.healthScore || 0), 0);
+
+        const avgHealthScore = accountsWithScore.length > 0
+            ? totalHealthScore / accountsWithScore.length
             : 0;
 
         // Time to Value médio (simplificado)

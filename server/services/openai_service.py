@@ -278,4 +278,72 @@ Com base nestes dados, forneça uma análise COMPLETA em formato JSON com a segu
 
 IMPORTANTE: Retorne APENAS o JSON, sem texto adicional antes ou depois."""
         
-        return prompt
+    def generate_playbook(self, topic: str, category: str) -> str:
+        """
+        Generate a playbook using OpenAI
+        
+        Args:
+            topic: The topic of the playbook
+            category: The category of the playbook
+            
+        Returns:
+            HTML content of the playbook
+        """
+        # Load default tenant settings if not loaded
+        if not self._openai_key:
+            self._load_default_tenant_settings()
+        
+        if not self._openai_key:
+            raise ValueError("OpenAI API key not configured. Please add it in Settings > AI.")
+            
+        # Initialize client
+        client = OpenAI(api_key=self._openai_key)
+        
+        prompt = f"""
+        Crie um playbook detalhado e estruturado para Customer Success sobre o tema: "{topic}".
+        Categoria: {category}
+        
+        INSTRUÇÕES:
+        1. Use as melhores práticas de Customer Success baseadas nos principais autores da área (como Lincoln Murphy, Gainsight, etc).
+        2. O conteúdo deve ser altamente prático e acionável.
+        3. Formate a saída EXCLUSIVAMENTE como HTML válido para ser inserido em um editor de texto rico.
+        4. Use tags como <h1>, <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>.
+        5. NÃO inclua tags <html>, <head> ou <body>. Apenas o conteúdo do corpo.
+        6. Estruture com:
+           - Objetivo do Playbook
+           - Gatilhos de Entrada (Quando usar)
+           - Stakeholders Envolvidos
+           - Passo a Passo Detalhado (Fases)
+           - KPIs de Sucesso
+           - Gatilhos de Saída
+           - Templates de Email (se aplicável)
+           
+        Seja criativo, profissional e direto.
+        """
+        
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4-turbo-preview",
+                messages=[
+                    {"role": "system", "content": "Você é um especialista mundial em Customer Success e operações de CS. Você cria playbooks de classe mundial."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=3000
+            )
+            
+            content = response.choices[0].message.content
+            
+            # Remove markdown code blocks if present
+            if content.startswith("```html"):
+                content = content[7:]
+            if content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+                
+            return content.strip()
+            
+        except Exception as e:
+            raise RuntimeError(f"OpenAI API error: {str(e)}")
+

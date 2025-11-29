@@ -39,8 +39,13 @@ const Dashboard = () => {
 
   // Calcular estatísticas gerais com base nos accounts filtrados
   const totalAccounts = filteredAccounts.length;
-  const avgHealthScore = filteredAccounts.length > 0
-    ? Math.round(filteredAccounts.reduce((sum, acc) => sum + (acc.healthScore || 0), 0) / filteredAccounts.length)
+
+  // Filter out accounts with 0 or null health score for the average calculation
+  const accountsWithScore = filteredAccounts.filter(acc => (acc.healthScore || 0) > 0);
+  const totalHealthScore = accountsWithScore.reduce((sum, acc) => sum + (acc.healthScore || 0), 0);
+
+  const avgHealthScore = accountsWithScore.length > 0
+    ? Math.round(totalHealthScore / accountsWithScore.length)
     : 0;
   const totalMRR = filteredAccounts.reduce((sum, acc) => sum + (acc.mrr || 0), 0);
   const accountsAtRisk = filteredAccounts.filter(acc =>

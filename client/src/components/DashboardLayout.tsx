@@ -37,6 +37,7 @@ import { APP_TITLE } from "@/const";
 import HealthScoreButton from "@/components/HealthScoreButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/auth";
+import { usePendencies } from "@/hooks/usePendencies";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -169,6 +170,14 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
   const { changePassword } = useUsers();
   const { theme, toggleTheme } = useTheme();
 
+  // Calculate pending health scores
+  const { accountsWithPendencies } = usePendencies();
+  const pendingHealthScoreCount = accountsWithPendencies.filter(a =>
+    a.pendingItems.some(item => item.type === 'health_score')
+  ).length;
+
+  console.log('[DashboardLayout] Pending Health Scores:', pendingHealthScoreCount);
+
   // Nome da plataforma baseado na organização atual
   const platformName = currentOrganization?.name || APP_TITLE;
 
@@ -293,7 +302,7 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
       </main>
 
       {/* Health Score Floating Button */}
-      {!hideHealthScoreButton && <HealthScoreButton variant="floating" />}
+      {!hideHealthScoreButton && <HealthScoreButton key={pendingHealthScoreCount} variant="floating" pendingCount={pendingHealthScoreCount} />}
 
       {/* Modal Alterar Senha */}
       <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>

@@ -22,8 +22,17 @@ import {
 } from "@/components/ui/select";
 import RichTextEditor from "@/components/RichTextEditor";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Eye } from "lucide-react";
+import { ArrowLeft, Save, Eye, Sparkles, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
 interface PlaybookEditorProps {
   id?: string; // Se fornecido, modo de edição
@@ -43,6 +52,99 @@ export default function PlaybookEditor({ id }: PlaybookEditorProps) {
     version: "1.0",
     is_active: true,
   });
+
+  // AI Generation State
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationTopic, setGenerationTopic] = useState("");
+  const [generationDialogOpen, setGenerationDialogOpen] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const [loadingProgress, setLoadingProgress] = useState(0);
+
+  const funnyMessages = [
+    "Consultando os oráculos de CS...",
+    "Ligando para o Lincoln Murphy...",
+    "Lendo todos os livros de Customer Success...",
+    "Calculando o Health Score do universo...",
+    "Evitando o Churn da sua paciência...",
+    "Gerando estratégias de retenção infalíveis...",
+    "Otimizando a experiência do usuário...",
+    "Buscando inspiração nos melhores playbooks...",
+  ];
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isGenerating) {
+      setLoadingProgress(0);
+      let progress = 0;
+
+      // Progress bar animation
+      const progressInterval = setInterval(() => {
+        progress += 1;
+        if (progress > 90) clearInterval(progressInterval);
+        setLoadingProgress(progress);
+      }, 100);
+
+      // Funny messages rotation
+      setLoadingMessage(funnyMessages[0]);
+      let msgIndex = 0;
+      interval = setInterval(() => {
+        msgIndex = (msgIndex + 1) % funnyMessages.length;
+        setLoadingMessage(funnyMessages[msgIndex]);
+      }, 2000);
+
+      return () => {
+        clearInterval(interval);
+        clearInterval(progressInterval);
+      };
+    }
+  }, [isGenerating]);
+
+  const handleGeneratePlaybook = async () => {
+    if (!generationTopic) {
+      toast.error("Por favor, informe um tema para o playbook");
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const response = await fetch("/api/v1/accounts/playbook/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topic: generationTopic,
+          category: formData.category,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Erro ao gerar playbook");
+      }
+
+      const data = await response.json();
+
+      // Update form data with generated content
+      setFormData(prev => ({
+        ...prev,
+        content: data.content,
+        name: prev.name || generationTopic, // Use topic as name if empty
+        description: prev.description || `Playbook gerado por IA sobre: ${generationTopic}`,
+      }));
+
+      setGenerationDialogOpen(false);
+      toast.success("Playbook gerado com sucesso! 🚀");
+
+    } catch (error) {
+      console.error("Erro na geração:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao gerar playbook");
+    } finally {
+      setIsGenerating(false);
+      setLoadingProgress(100);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -168,6 +270,70 @@ export default function PlaybookEditor({ id }: PlaybookEditorProps) {
                   onChange={(content) => setFormData({ ...formData, content })}
                   placeholder="Comece a escrever seu playbook aqui..."
                 />
+
+                {/* AI Generation Dialog Trigger */}
+                <Button
+                  variant="outline"
+                  className="mt-4 w-full border-dashed border-2 hover:border-primary hover:bg-primary/5 group"
+                  onClick={() => setGenerationDialogOpen(true)}
+                >
+                  <Sparkles className="w-4 h-4 mr-2 text-purple-500 group-hover:text-primary transition-colors" />
+                  Help me write (IA)
+                </Button>
+
+                {/* AI Generation Dialog */}
+                <Dialog open={generationDialogOpen} onOpenChange={setGenerationDialogOpen}>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-purple-500" />
+                        Gerador de Playbook com IA
+                      </DialogTitle>
+                      <DialogDescription>
+                        Descreva o objetivo do playbook e nossa IA criará uma estrutura completa baseada nas melhores práticas de mercado.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    {!isGenerating ? (
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label>Sobre o que é este playbook?</Label>
+                          <Input
+                            placeholder="Ex: Onboarding para clientes Enterprise, Recuperação de Churn, QBR..."
+                            value={generationTopic}
+                            onChange={(e) => setGenerationTopic(e.target.value)}
+                          />
+                        </div>
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm text-blue-700 dark:text-blue-300">
+                          💡 <strong>Dica:</strong> A IA usará a categoria selecionada ({formData.category}) para contextualizar o conteúdo.
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-8 space-y-6 text-center">
+                        <div className="relative w-20 h-20 mx-auto">
+                          <div className="absolute inset-0 animate-ping rounded-full bg-purple-200 opacity-75"></div>
+                          <div className="relative flex items-center justify-center w-20 h-20 bg-purple-100 rounded-full">
+                            <Sparkles className="w-10 h-10 text-purple-600 animate-pulse" />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <h3 className="font-medium text-lg animate-pulse">{loadingMessage}</h3>
+                          <Progress value={loadingProgress} className="w-full h-2" />
+                        </div>
+                      </div>
+                    )}
+
+                    <DialogFooter>
+                      {!isGenerating && (
+                        <Button onClick={handleGeneratePlaybook} className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700">
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Gerar Playbook Mágico
+                        </Button>
+                      )}
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardContent>
           </Card>

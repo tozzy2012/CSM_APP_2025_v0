@@ -5,6 +5,8 @@ API endpoints for account analysis and insights
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
+from pydantic import BaseModel
+
 
 from database import get_db
 from services.account_intelligence import AccountIntelligenceService
@@ -73,3 +75,28 @@ async def analyze_account_with_ai(
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error analyzing account: {str(e)}")
+
+
+class PlaybookGenerationRequest(BaseModel):
+    topic: str
+    category: str
+
+
+@router.post("/playbook/generate")
+async def generate_playbook_with_ai(
+    request: PlaybookGenerationRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Generate a playbook using AI
+    """
+    try:
+        ai_service = OpenAIService(db)
+        content = ai_service.generate_playbook(request.topic, request.category)
+        return {"content": content}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating playbook: {str(e)}")
