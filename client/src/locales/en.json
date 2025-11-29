@@ -1,0 +1,117 @@
+{
+    "sidebar": {
+        "dashboard": "Dashboard",
+        "clients": "Client Portfolio",
+        "radar": "CS Radar",
+        "pendencies": "Pendencies",
+        "playbooks": "Playbooks",
+        "intelligence": "Intelligence",
+        "settings": "Settings",
+        "logout": "Logout"
+    },
+    "common": {
+        "loading": "Loading...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "back": "Back",
+        "edit": "Edit",
+        "delete": "Delete",
+        "search": "Search...",
+        "filter": "Filter",
+        "none": "None",
+        "success": "Success",
+        "error": "Error"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Overview of your accounts and pipeline",
+        "tabs": {
+            "overview": "Overview",
+            "overview_desc": "Accounts and pipeline",
+            "kanban": "Kanban Board",
+            "kanban_desc": "Visual management",
+            "executive": "Executive Dashboard",
+            "executive_desc": "Strategic metrics"
+        },
+        "metrics": {
+            "total_accounts": "Total Accounts",
+            "active_accounts": "Active accounts",
+            "avg_health": "Avg Health Score",
+            "total_mrr": "Total MRR",
+            "monthly_revenue": "Monthly recurring revenue",
+            "risk_accounts": "Accounts at Risk",
+            "attention_needed": "Requires attention"
+        },
+        "pipeline": {
+            "title": "Account Pipeline",
+            "subtitle": "Drag and drop to change status",
+            "empty": "No accounts registered yet"
+        }
+    },
+    "login": {
+        "subtitle": "Enter your credentials or use SSO",
+        "google": "Login with Google",
+        "microsoft": "Login with Microsoft",
+        "or_email": "Or continue with email",
+        "email_label": "Email or Login",
+        "password_label": "Password",
+        "submit": "Sign In",
+        "submitting": "Signing in...",
+        "success": "Login successful!",
+        "error_credentials": "Incorrect email or password",
+        "error_sso": "Error starting SSO login"
+    },
+    "clients": {
+        "title": "Clients",
+        "subtitle": "Manage your portfolio of companies and stakeholders",
+        "import": "Import",
+        "new": "New Client",
+        "search_placeholder": "Search by name, CNPJ or industry...",
+        "total": "Total Clients",
+        "empty_title": "No clients found",
+        "empty_desc": "Start by adding your first client to manage your portfolio.",
+        "empty_search": "No results found for",
+        "add_first": "Add Client",
+        "delete_title": "Delete Client",
+        "delete_confirm": "Are you sure you want to delete",
+        "delete_warning": "This action cannot be undone and will remove all associated data.",
+        "delete_success": "Client deleted successfully"
+    },
+    "accounts": {
+        "title": "Accounts",
+        "subtitle": "Manage your accounts and clients",
+        "import": "Import Accounts",
+        "new": "New Account",
+        "search_placeholder": "Search accounts...",
+        "empty_title": "No accounts found",
+        "empty_desc": "Start by creating your first account linked to a client",
+        "empty_search": "Try adjusting the search filters",
+        "create_first": "Create First Account",
+        "form": {
+            "basic_info": "Basic Information",
+            "kickoff": "Internal Kick Off",
+            "client": "Client",
+            "select_client": "Select a client...",
+            "search_client": "Search client...",
+            "selected_client": "Selected client:",
+            "company_name": "Company Name",
+            "auto_filled": "Auto-filled from client",
+            "industry": "Industry",
+            "type": "Account Type",
+            "csm": "Responsible CSM",
+            "select_csm": "Select a CSM",
+            "mrr": "MRR ($)",
+            "website": "Website",
+            "contract_start": "Contract Start",
+            "contract_end": "Contract End",
+            "sales_info": "Sales Information",
+            "sales_rep": "Sales Rep",
+            "sale_origin": "Sale Origin",
+            "negotiation": "Negotiation & Expectations",
+            "spiced": "SPICED Framework",
+            "other_info": "Other Information"
+        },
+        "success_create": "Account created successfully!",
+        "error_create": "Error creating account"
+    }
+}

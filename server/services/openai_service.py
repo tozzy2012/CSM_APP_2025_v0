@@ -98,7 +98,7 @@ class OpenAIService:
     def _get_system_prompt(self) -> str:
         """Get system prompt (from settings or default)"""
         if self._system_prompt:
-            return self._system_prompt
+            return self._system_prompt + " Responda sempre em formato JSON."
         
         # Default prompt
         return """Você é um Customer Success Manager Sênior com vasta experiência em retenção de clientes B2B e expansão de receita (Upsell/Cross-sell).
@@ -113,7 +113,8 @@ Ao analisar contas, identifique proativamente:
 - Oportunidades de Expansão (novos casos de uso)
 - Saúde do Relacionamento (engajamento com stakeholders)
 
-Mantenha um tom profissional, consultivo e direto."""
+Mantenha um tom profissional, consultivo e direto.
+IMPORTANTE: Você deve responder EXCLUSIVAMENTE em formato JSON válido."""
     
     def _build_analysis_prompt(self, context: Dict) -> str:
         """Build analysis prompt from context"""
@@ -171,7 +172,7 @@ Mantenha um tom profissional, consultivo e direto."""
 - Riscos/Red Flags: {kickoff.get('risks', 'N/A')}
 """
 
-        prompt = f"""Analise profundamente este cliente B2B SaaS:
+        prompt = f"""Analise profundamente este cliente B2B SaaS e forneça a saída em JSON:
 
 ## DADOS DO CLIENTE
 
@@ -277,6 +278,7 @@ Com base nestes dados, forneça uma análise COMPLETA em formato JSON com a segu
 }}
 
 IMPORTANTE: Retorne APENAS o JSON, sem texto adicional antes ou depois."""
+        return prompt
         
     def generate_playbook(self, topic: str, category: str) -> str:
         """
@@ -346,4 +348,3 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional antes ou depois."""
             
         except Exception as e:
             raise RuntimeError(f"OpenAI API error: {str(e)}")
-

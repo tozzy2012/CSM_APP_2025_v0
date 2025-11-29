@@ -25,9 +25,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import EditAccountDialog from "@/components/EditAccountDialog";
+
 import CSMFilter from "@/components/CSMFilter";
+import { useTranslation } from "react-i18next";
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { accounts } = useAccountsContext();
   const [editingAccount, setEditingAccount] = useState<any>(null);
   const [selectedCSM, setSelectedCSM] = useState<string>("all");
@@ -78,9 +81,9 @@ const Dashboard = () => {
     <div className="p-8 space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t("dashboard.title")}</h2>
         <p className="text-muted-foreground">
-          Visão geral das suas contas e pipeline
+          {t("dashboard.subtitle")}
         </p>
       </div>
 
@@ -99,10 +102,10 @@ const Dashboard = () => {
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-sm text-gray-900 group-data-[state=active]:text-blue-700">
-                    Visão Geral
+                    {t("dashboard.tabs.overview")}
                   </div>
                   <div className="text-xs text-gray-500 mt-0.5 group-data-[state=active]:text-blue-600">
-                    Contas e pipeline
+                    {t("dashboard.tabs.overview_desc")}
                   </div>
                 </div>
               </TabsTrigger>
@@ -116,10 +119,10 @@ const Dashboard = () => {
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-sm text-gray-900 group-data-[state=active]:text-purple-700">
-                    Kanban Board
+                    {t("dashboard.tabs.kanban")}
                   </div>
                   <div className="text-xs text-gray-500 mt-0.5 group-data-[state=active]:text-purple-600">
-                    Gestão visual
+                    {t("dashboard.tabs.kanban_desc")}
                   </div>
                 </div>
               </TabsTrigger>
@@ -133,10 +136,10 @@ const Dashboard = () => {
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-sm text-gray-900 group-data-[state=active]:text-green-700">
-                    Dashboard Executivo
+                    {t("dashboard.tabs.executive")}
                   </div>
                   <div className="text-xs text-gray-500 mt-0.5 group-data-[state=active]:text-green-600">
-                    Métricas estratégicas
+                    {t("dashboard.tabs.executive_desc")}
                   </div>
                 </div>
               </TabsTrigger>
@@ -149,8 +152,8 @@ const Dashboard = () => {
           {/* Header with Filter */}
           <div className="flex items-center gap-6">
             <div>
-              <h3 className="text-lg font-semibold">Visão Geral</h3>
-              <p className="text-sm text-muted-foreground">Métricas e pipeline de contas</p>
+              <h3 className="text-lg font-semibold">{t("dashboard.tabs.overview")}</h3>
+              <p className="text-sm text-muted-foreground">{t("dashboard.tabs.overview_desc")}</p>
             </div>
             <div className="h-8 w-px bg-gray-200" />
             <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />
@@ -160,33 +163,33 @@ const Dashboard = () => {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Accounts</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("dashboard.metrics.total_accounts")}</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{totalAccounts}</div>
                 <p className="text-xs text-muted-foreground">
-                  Contas ativas
+                  {t("dashboard.metrics.active_accounts")}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Health Score Médio</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("dashboard.metrics.avg_health")}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{avgHealthScore}</div>
                 <p className="text-xs text-muted-foreground">
-                  {avgHealthScore >= 70 ? '🟢 Saudável' : avgHealthScore >= 50 ? '🟡 Atenção' : '🔴 Crítico'}
+                  {avgHealthScore >= 70 ? `🟢 ${t("common.success")}` : avgHealthScore >= 50 ? `🟡 ${t("dashboard.metrics.attention_needed")}` : `🔴 ${t("dashboard.metrics.risk_accounts")}`}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">MRR Total</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("dashboard.metrics.total_mrr")}</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -194,20 +197,20 @@ const Dashboard = () => {
                   R$ {(totalMRR / 1000).toFixed(1)}K
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Receita recorrente mensal
+                  {t("dashboard.metrics.monthly_revenue")}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Accounts em Risco</CardTitle>
+                <CardTitle className="text-sm font-medium">{t("dashboard.metrics.risk_accounts")}</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">{accountsAtRisk}</div>
                 <p className="text-xs text-red-600">
-                  Requer atenção
+                  {t("dashboard.metrics.attention_needed")}
                 </p>
               </CardContent>
             </Card>
@@ -216,9 +219,9 @@ const Dashboard = () => {
           {/* Lista de Accounts em Cards */}
           <Card>
             <CardHeader>
-              <CardTitle>Pipeline de Accounts</CardTitle>
+              <CardTitle>{t("dashboard.pipeline.title")}</CardTitle>
               <CardDescription>
-                Arraste e solte para mudar o status
+                {t("dashboard.pipeline.subtitle")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -301,7 +304,7 @@ const Dashboard = () => {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => setEditingAccount(account)}>
                                 <Pencil className="h-4 w-4 mr-2" />
-                                Editar
+                                {t("common.edit")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -314,7 +317,7 @@ const Dashboard = () => {
 
               {accounts.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
-                  Nenhum account cadastrado ainda
+                  {t("dashboard.pipeline.empty")}
                 </div>
               )}
             </CardContent>
@@ -325,8 +328,8 @@ const Dashboard = () => {
         <TabsContent value="kanban" className="space-y-4">
           <div className="flex items-center gap-6">
             <div>
-              <h3 className="text-lg font-semibold">Kanban Board</h3>
-              <p className="text-sm text-muted-foreground">Gerencie suas contas visualmente</p>
+              <h3 className="text-lg font-semibold">{t("dashboard.tabs.kanban")}</h3>
+              <p className="text-sm text-muted-foreground">{t("dashboard.tabs.kanban_desc")}</p>
             </div>
             <div className="h-8 w-px bg-gray-200" />
             <CSMFilter selectedCSM={selectedCSM} onCSMChange={setSelectedCSM} />

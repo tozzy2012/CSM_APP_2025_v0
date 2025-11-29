@@ -39,9 +39,11 @@ import {
 import AddClientDialog from "@/components/AddClientDialog";
 import EditClientDialog from "@/components/EditClientDialog";
 import ImportClientsDialog from "@/components/ImportClientsDialog";
+import { useTranslation } from "react-i18next";
 
 export default function Clients() {
-  const { clients, deleteClient, addClient, error, loading, refetch } = useClientsContext();
+  const { t } = useTranslation();
+  const { clients, deleteClient, addClient, refetch } = useClientsContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [, setLocation] = useLocation();
 
@@ -90,19 +92,19 @@ export default function Clients() {
         <div className="px-8 py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">Clientes</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("clients.title")}</h1>
               <p className="text-muted-foreground mt-1">
-                Gerencie seu portfólio de empresas e stakeholders
+                {t("clients.subtitle")}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
                 <Upload className="w-4 h-4 mr-2" />
-                Importar
+                {t("clients.import")}
               </Button>
               <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Novo Cliente
+                {t("clients.new")}
               </Button>
             </div>
           </div>
@@ -111,7 +113,7 @@ export default function Clients() {
           <div className="mt-8 max-w-md relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, CNPJ ou setor..."
+              placeholder={t("clients.search_placeholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-background/50"
@@ -132,39 +134,29 @@ export default function Clients() {
                 <Building2 className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Clientes</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("clients.total")}</p>
                 <h3 className="text-2xl font-bold">{clients.length}</h3>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Error State */}
-        {error && (
-          <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-lg mb-6 flex items-center justify-between">
-            <p>Erro ao carregar clientes: {error}</p>
-            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-              Tentar Novamente
-            </Button>
-          </div>
-        )}
-
         {/* Clients Grid */}
-        {!error && filteredClients.length === 0 ? (
-          <div className="text-center py-20 bg-card rounded-lg border border-dashed">
+        {filteredClients.length === 0 ? (
+          <div className="text-center py-12">
             <div className="p-4 bg-muted rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <Building2 className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Nenhum cliente encontrado</h3>
+            <h3 className="text-lg font-semibold mb-2">{t("clients.empty_title")}</h3>
             <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
               {searchTerm
-                ? `Não encontramos resultados para "${searchTerm}"`
-                : "Comece adicionando seu primeiro cliente para gerenciar seu portfólio."}
+                ? `${t("clients.empty_search")} "${searchTerm}"`
+                : t("clients.empty_desc")}
             </p>
             {!searchTerm && (
               <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar Cliente
+                {t("clients.add_first")}
               </Button>
             )}
           </div>
@@ -209,24 +201,25 @@ export default function Clients() {
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button
                             variant="ghost"
-                            size="icon"
+                            size="sm"
+                            className="h-8 w-8 p-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingClient(client);
                             }}
-                            title="Editar"
+                            title={t("common.edit")}
                           >
                             <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                             onClick={(e) => {
                               e.stopPropagation();
                               setDeletingClient(client);
                             }}
-                            title="Excluir"
+                            title={t("common.delete")}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -337,27 +330,27 @@ export default function Clients() {
       <Dialog open={!!deletingClient} onOpenChange={() => setDeletingClient(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Excluir Cliente</DialogTitle>
+            <DialogTitle>{t("clients.delete_title")}</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir <strong>{deletingClient?.name}</strong>?
-              Esta ação não pode ser desfeita e removerá todos os dados associados.
+              {t("clients.delete_confirm")} <strong>{deletingClient?.name}</strong>?
+              {t("clients.delete_warning")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeletingClient(null)}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={() => {
                 if (deletingClient) {
                   deleteClient(deletingClient.id);
-                  toast.success("Cliente excluído com sucesso");
+                  toast.success(t("clients.delete_success"));
                   setDeletingClient(null);
                 }
               }}
             >
-              Excluir Cliente
+              {t("clients.delete_title")}
             </Button>
           </DialogFooter>
         </DialogContent>

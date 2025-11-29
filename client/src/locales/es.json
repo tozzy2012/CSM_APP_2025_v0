@@ -1,0 +1,117 @@
+{
+    "sidebar": {
+        "dashboard": "Panel de Control",
+        "clients": "Cartera de Clientes",
+        "radar": "Radar CS",
+        "pendencies": "Pendientes",
+        "playbooks": "Playbooks",
+        "intelligence": "Inteligencia",
+        "settings": "Configuraciones",
+        "logout": "Cerrar Sesión"
+    },
+    "common": {
+        "loading": "Cargando...",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "back": "Volver",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "search": "Buscar...",
+        "filter": "Filtrar",
+        "none": "Ninguno",
+        "success": "Éxito",
+        "error": "Error"
+    },
+    "dashboard": {
+        "title": "Panel de Control",
+        "subtitle": "Resumen de sus cuentas y pipeline",
+        "tabs": {
+            "overview": "Visión General",
+            "overview_desc": "Cuentas y pipeline",
+            "kanban": "Tablero Kanban",
+            "kanban_desc": "Gestión visual",
+            "executive": "Panel Ejecutivo",
+            "executive_desc": "Métricas estratégicas"
+        },
+        "metrics": {
+            "total_accounts": "Total de Cuentas",
+            "active_accounts": "Cuentas activas",
+            "avg_health": "Puntaje de Salud Promedio",
+            "total_mrr": "MRR Total",
+            "monthly_revenue": "Ingresos recurrentes mensuales",
+            "risk_accounts": "Cuentas en Riesgo",
+            "attention_needed": "Requiere atención"
+        },
+        "pipeline": {
+            "title": "Pipeline de Cuentas",
+            "subtitle": "Arrastre y suelte para cambiar el estado",
+            "empty": "No hay cuentas registradas aún"
+        }
+    },
+    "login": {
+        "subtitle": "Ingrese sus credenciales o use SSO",
+        "google": "Iniciar con Google",
+        "microsoft": "Iniciar con Microsoft",
+        "or_email": "O continúe con correo electrónico",
+        "email_label": "Correo o Usuario",
+        "password_label": "Contraseña",
+        "submit": "Entrar",
+        "submitting": "Entrando...",
+        "success": "¡Inicio de sesión exitoso!",
+        "error_credentials": "Correo o contraseña incorrectos",
+        "error_sso": "Error al iniciar sesión SSO"
+    },
+    "clients": {
+        "title": "Clientes",
+        "subtitle": "Gestione su cartera de empresas y partes interesadas",
+        "import": "Importar",
+        "new": "Nuevo Cliente",
+        "search_placeholder": "Buscar por nombre, CNPJ o industria...",
+        "total": "Total de Clientes",
+        "empty_title": "No se encontraron clientes",
+        "empty_desc": "Comience agregando su primer cliente para gestionar su cartera.",
+        "empty_search": "No se encontraron resultados para",
+        "add_first": "Agregar Cliente",
+        "delete_title": "Eliminar Cliente",
+        "delete_confirm": "¿Está seguro de que desea eliminar",
+        "delete_warning": "Esta acción no se puede deshacer y eliminará todos los datos asociados.",
+        "delete_success": "Cliente eliminado con éxito"
+    },
+    "accounts": {
+        "title": "Cuentas",
+        "subtitle": "Gestione sus cuentas y clientes",
+        "import": "Importar Cuentas",
+        "new": "Nueva Cuenta",
+        "search_placeholder": "Buscar cuentas...",
+        "empty_title": "No se encontraron cuentas",
+        "empty_desc": "Comience creando su primera cuenta vinculada a un cliente",
+        "empty_search": "Intente ajustar los filtros de búsqueda",
+        "create_first": "Crear Primera Cuenta",
+        "form": {
+            "basic_info": "Información Básica",
+            "kickoff": "Kick Off Interno",
+            "client": "Cliente",
+            "select_client": "Seleccione un cliente...",
+            "search_client": "Buscar cliente...",
+            "selected_client": "Cliente seleccionado:",
+            "company_name": "Nombre de la Empresa",
+            "auto_filled": "Autocompletado del cliente",
+            "industry": "Industria",
+            "type": "Tipo de Cuenta",
+            "csm": "CSM Responsable",
+            "select_csm": "Seleccione un CSM",
+            "mrr": "MRR ($)",
+            "website": "Sitio Web",
+            "contract_start": "Inicio del Contrato",
+            "contract_end": "Fin del Contrato",
+            "sales_info": "Información de Ventas",
+            "sales_rep": "Representante de Ventas",
+            "sale_origin": "Origen de la Venta",
+            "negotiation": "Negociación y Expectativas",
+            "spiced": "Marco SPICED",
+            "other_info": "Otra Información"
+        },
+        "success_create": "¡Cuenta creada con éxito!",
+        "error_create": "Error al crear la cuenta"
+    }
+}

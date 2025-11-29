@@ -38,6 +38,8 @@ import HealthScoreButton from "@/components/HealthScoreButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/auth";
 import { usePendencies } from "@/hooks/usePendencies";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -51,23 +53,10 @@ interface NavItem {
   children?: NavItem[];
 }
 
-const navItems: NavItem[] = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/clients", label: "Clientes", icon: Building2 },
-  {
-    path: "/accounts",
-    label: "Accounts",
-    icon: Users,
-    children: [
-      { path: "/tasks", label: "Tasks", icon: CheckSquare },
-      { path: "/activities", label: "Activities", icon: Activity },
-      { path: "/pendencies", label: "Pendências", icon: AlertCircle },
-      { path: "/radar-cs", label: "Radar CS", icon: Newspaper },
-    ]
-  },
-  { path: "/playbooks", label: "Playbooks", icon: BookOpen },
-  { path: "/settings", label: "Settings", icon: Settings },
-];
+
+// NavItem definition moved inside component or wrapped to use translation
+// We will change how navItems are defined to support translation
+
 
 // NavMenuItem Component with collapsible functionality
 function NavMenuItem({ item, location }: { item: NavItem; location: string }) {
@@ -169,6 +158,25 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
   const { logout, currentUser, currentOrganization } = useAuth();
   const { changePassword } = useUsers();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
+
+  const navItems: NavItem[] = [
+    { path: "/dashboard", label: t("sidebar.dashboard"), icon: LayoutDashboard },
+    { path: "/clients", label: t("sidebar.clients"), icon: Building2 },
+    {
+      path: "/accounts",
+      label: "Accounts", // Keeping as Accounts for now or add to translation
+      icon: Users,
+      children: [
+        { path: "/tasks", label: "Tasks", icon: CheckSquare },
+        { path: "/activities", label: "Activities", icon: Activity },
+        { path: "/pendencies", label: t("sidebar.pendencies"), icon: AlertCircle },
+        { path: "/radar-cs", label: t("sidebar.radar"), icon: Newspaper },
+      ]
+    },
+    { path: "/playbooks", label: t("sidebar.playbooks"), icon: BookOpen },
+    { path: "/settings", label: t("sidebar.settings"), icon: Settings },
+  ];
 
   // Calculate pending health scores
   const { accountsWithPendencies } = usePendencies();
@@ -270,7 +278,7 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
             onClick={handleLogout}
           >
             <LogOut className="w-5 h-5 mr-3" />
-            Logout
+            {t("sidebar.logout")}
           </Button>
         </div>
       </aside>
@@ -281,11 +289,12 @@ export default function DashboardLayout({ children, hideHealthScoreButton = fals
         <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h2 className="text-lg font-semibold text-foreground">
-              {navItems.find((item) => location.startsWith(item.path))?.label || "Dashboard"}
+              {navItems.find((item) => location.startsWith(item.path))?.label || t("sidebar.dashboard")}
             </h2>
           </div>
 
           <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             <div className="text-sm text-muted-foreground">
               {currentUser?.name || "Usuário"}
               {currentUser?.role === UserRole.SUPER_ADMIN && (

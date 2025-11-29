@@ -47,8 +47,10 @@ import {
 import { toast } from "sonner";
 
 import CSMFilter from "@/components/CSMFilter";
+import { useTranslation } from "react-i18next";
 
 export default function Accounts() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { currentUser } = useAuth();
   const { accounts, createAccount, deleteAccount } = useAccountsContext();
@@ -164,8 +166,9 @@ export default function Accounts() {
         clientId: selectedClientId,
         ...formData,
         internalKickoff: kickoffData,
+
       });
-      toast.success("Account criado com sucesso!");
+      toast.success(t("accounts.success_create"));
       setIsCreateOpen(false);
 
       // Reset form
@@ -208,7 +211,7 @@ export default function Accounts() {
       });
     } catch (error) {
       console.error("Erro ao criar account:", error);
-      toast.error("Erro ao criar account");
+      toast.error(t("accounts.error_create"));
     }
   };
 
@@ -230,19 +233,19 @@ export default function Accounts() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Accounts</h1>
+          <h1 className="text-3xl font-bold">{t("accounts.title")}</h1>
           <p className="text-muted-foreground">
-            Gerencie suas contas e clientes
+            {t("accounts.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setIsImportOpen(true)} variant="outline">
             <Upload className="h-4 w-4 mr-2" />
-            Importar Accounts
+            {t("accounts.import")}
           </Button>
           <Button onClick={() => setIsCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Novo Account
+            {t("accounts.new")}
           </Button>
         </div>
       </div>
@@ -252,7 +255,7 @@ export default function Accounts() {
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar accounts..."
+            placeholder={t("accounts.search_placeholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -269,7 +272,7 @@ export default function Accounts() {
               <Building2 className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Accounts</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.metrics.total_accounts")}</p>
               <p className="text-2xl font-bold">{accounts.length}</p>
             </div>
           </div>
@@ -281,7 +284,7 @@ export default function Accounts() {
               <DollarSign className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">MRR Total</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.metrics.total_mrr")}</p>
               <p className="text-2xl font-bold">
                 R$ {accounts.reduce((sum, acc) => sum + acc.mrr, 0).toLocaleString()}
               </p>
@@ -295,7 +298,7 @@ export default function Accounts() {
               <TrendingUp className="h-6 w-6 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Health Score Médio</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.metrics.avg_health")}</p>
               <p className="text-2xl font-bold">
                 {accounts.length > 0
                   ? Math.round(
@@ -313,16 +316,16 @@ export default function Accounts() {
       {filteredAccounts.length === 0 ? (
         <Card className="p-12 text-center">
           <Building2 className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-          <h3 className="text-xl font-semibold mb-2">Nenhum account encontrado</h3>
+          <h3 className="text-xl font-semibold mb-2">{t("accounts.empty_title")}</h3>
           <p className="text-muted-foreground mb-6">
             {accounts.length === 0
-              ? "Comece criando seu primeiro account vinculado a um cliente"
-              : "Tente ajustar os filtros de busca"}
+              ? t("accounts.empty_desc")
+              : t("accounts.empty_search")}
           </p>
           {accounts.length === 0 && (
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Criar Primeiro Account
+              {t("accounts.create_first")}
             </Button>
           )}
         </Card>
@@ -417,13 +420,13 @@ export default function Accounts() {
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="w-[90vw] max-w-[1800px] max-h-[95vh] overflow-y-auto p-8">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Novo Account</DialogTitle>
+            <DialogTitle className="text-2xl">{t("accounts.new")}</DialogTitle>
           </DialogHeader>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
-              <TabsTrigger value="kickoff">Kick Off Interno</TabsTrigger>
+              <TabsTrigger value="basic">{t("accounts.form.basic_info")}</TabsTrigger>
+              <TabsTrigger value="kickoff">{t("accounts.form.kickoff")}</TabsTrigger>
             </TabsList>
 
             <div className="mt-4 space-y-6 max-h-[60vh] overflow-y-auto pr-2">
@@ -431,18 +434,18 @@ export default function Accounts() {
                 {/* Seleção de Cliente */}
                 <div className="space-y-2">
                   <Label>
-                    Cliente <span className="text-red-500">*</span>
+                    {t("accounts.form.client")} <span className="text-red-500">*</span>
                   </Label>
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <Select value={selectedClientId} onValueChange={handleClientSelect}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione um cliente..." />
+                          <SelectValue placeholder={t("accounts.form.select_client")} />
                         </SelectTrigger>
                         <SelectContent>
                           <div className="p-2">
                             <Input
-                              placeholder="Buscar cliente..."
+                              placeholder={t("accounts.form.search_client")}
                               value={clientSearchTerm}
                               onChange={(e) => setClientSearchTerm(e.target.value)}
                               className="mb-2"
@@ -482,7 +485,7 @@ export default function Accounts() {
                   </div>
                   {selectedClientId && (
                     <p className="text-sm text-muted-foreground">
-                      Cliente selecionado: {clients.find((c) => c.id === selectedClientId)?.name}
+                      {t("accounts.form.selected_client")} {clients.find((c) => c.id === selectedClientId)?.name}
                     </p>
                   )}
                 </div>
@@ -490,7 +493,7 @@ export default function Accounts() {
                 {/* Informações Básicas do Account */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome da Empresa</Label>
+                    <Label htmlFor="name">{t("accounts.form.company_name")}</Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -503,7 +506,7 @@ export default function Accounts() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="industry">Setor</Label>
+                    <Label htmlFor="industry">{t("accounts.form.industry")}</Label>
                     <Input
                       id="industry"
                       value={formData.industry}
@@ -516,7 +519,7 @@ export default function Accounts() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="type">Tipo de Conta</Label>
+                    <Label htmlFor="type">{t("accounts.form.type")}</Label>
                     <Select
                       value={formData.type}
                       onValueChange={(value) =>
@@ -536,7 +539,7 @@ export default function Accounts() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="csm">CSM Responsável</Label>
+                    <Label htmlFor="csm">{t("accounts.form.csm")}</Label>
                     <Select
                       value={formData.csm}
                       onValueChange={(value) =>
@@ -544,7 +547,7 @@ export default function Accounts() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um CSM" />
+                        <SelectValue placeholder={t("accounts.form.select_csm")} />
                       </SelectTrigger>
                       <SelectContent>
                         {csms.map((csm) => (
@@ -557,7 +560,7 @@ export default function Accounts() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="mrr">MRR (R$)</Label>
+                    <Label htmlFor="mrr">{t("accounts.form.mrr")}</Label>
                     <Input
                       id="mrr"
                       type="number"
@@ -569,7 +572,7 @@ export default function Accounts() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="website">Website</Label>
+                    <Label htmlFor="website">{t("accounts.form.website")}</Label>
                     <Input
                       id="website"
                       value={formData.website}
@@ -582,7 +585,7 @@ export default function Accounts() {
 
                   <div className="space-y-2">
                     <Label htmlFor="contractStart">
-                      Início do Contrato <span className="text-red-500">*</span>
+                      {t("accounts.form.contract_start")} <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="contractStart"
@@ -596,7 +599,7 @@ export default function Accounts() {
 
                   <div className="space-y-2">
                     <Label htmlFor="contractEnd">
-                      Fim do Contrato <span className="text-red-500">*</span>
+                      {t("accounts.form.contract_end")} <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="contractEnd"
@@ -613,10 +616,10 @@ export default function Accounts() {
               <TabsContent value="kickoff" className="space-y-6">
                 {/* Vendas */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Informações de Vendas</h3>
+                  <h3 className="text-lg font-semibold">{t("accounts.form.sales_info")}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="salesRep">Vendedor</Label>
+                      <Label htmlFor="salesRep">{t("accounts.form.sales_rep")}</Label>
                       <Input
                         id="salesRep"
                         value={kickoffData.salesRep}
@@ -625,7 +628,7 @@ export default function Accounts() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="saleOrigin">Origem da Venda</Label>
+                      <Label htmlFor="saleOrigin">{t("accounts.form.sale_origin")}</Label>
                       <Select
                         value={kickoffData.saleOrigin}
                         onValueChange={(value) => setKickoffData({ ...kickoffData, saleOrigin: value })}
@@ -656,7 +659,7 @@ export default function Accounts() {
 
                 {/* Negociação e Expectativas */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Negociação e Expectativas</h3>
+                  <h3 className="text-lg font-semibold">{t("accounts.form.negotiation")}</h3>
                   <div className="space-y-2">
                     <Label htmlFor="negotiatedWith">Com quem o vendedor negociou?</Label>
                     <Textarea
@@ -697,7 +700,7 @@ export default function Accounts() {
 
                 {/* SPICED */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Framework SPICED</h3>
+                  <h3 className="text-lg font-semibold">{t("accounts.form.spiced")}</h3>
 
                   <div className="space-y-2">
                     <Label htmlFor="customerSituation">Situation (Situação)</Label>
@@ -762,7 +765,7 @@ export default function Accounts() {
 
                 {/* Outros */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Outras Informações</h3>
+                  <h3 className="text-lg font-semibold">{t("accounts.form.other_info")}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="championIdentified">Champion Identificado</Label>
@@ -807,9 +810,9 @@ export default function Accounts() {
 
           <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
-            <Button onClick={handleCreateAccount}>Criar Account</Button>
+            <Button onClick={handleCreateAccount}>{t("accounts.new")}</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -827,19 +830,19 @@ export default function Accounts() {
       <Dialog open={!!deletingAccount} onOpenChange={() => setDeletingAccount(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogTitle>{t("common.delete")}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
-              Tem certeza que deseja excluir o account <strong>{deletingAccount?.name}</strong>?
+              {t("clients.delete_confirm")} <strong>{deletingAccount?.name}</strong>?
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Esta ação não pode ser desfeita.
+              {t("clients.delete_warning")}
             </p>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDeletingAccount(null)}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -847,16 +850,16 @@ export default function Accounts() {
                 try {
                   if (deletingAccount) {
                     await deleteAccount(deletingAccount.id);
-                    toast.success('Account excluído com sucesso');
+                    toast.success(t("common.success"));
                     setDeletingAccount(null);
                   }
                 } catch (error) {
                   console.error("Erro ao excluir account:", error);
-                  toast.error("Erro ao excluir account");
+                  toast.error(t("common.error"));
                 }
               }}
             >
-              Excluir
+              {t("common.delete")}
             </Button>
           </div>
         </DialogContent>
